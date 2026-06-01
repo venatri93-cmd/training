@@ -497,6 +497,7 @@ async function init(){
     await loadVorlagen();
     const d=new Date();calViewYear=d.getFullYear();calViewMonth=d.getMonth();
     document.getElementById('hdr-date').textContent=d.getDate()+'. '+MONTHS_SH[d.getMonth()]+' '+d.getFullYear();
+    await loadMonthDays(calViewYear,calViewMonth);
     renderCal();selectDay(todayKey());renderStats();
   }catch(e){setSS('error','Fehler: '+e.message.substring(0,40));}
 }
@@ -690,7 +691,7 @@ function pickColor(c){selectedColor=c;renderColorPicker();}
 function pickSymbol(s){selectedSymbol=s;renderColorPicker();}
 
 // CALENDAR
-function calMonth(delta){calViewMonth+=delta;if(calViewMonth<0){calViewMonth=11;calViewYear--;}if(calViewMonth>11){calViewMonth=0;calViewYear++;}renderCal();}
+function calMonth(delta){calViewMonth+=delta;if(calViewMonth<0){calViewMonth=11;calViewYear--;}if(calViewMonth>11){calViewMonth=0;calViewYear++;}loadMonthDays(calViewYear,calViewMonth).then(()=>renderCal());}
 function renderCal(){
   document.getElementById('cal-month-label').textContent=MONTHS_DE[calViewMonth]+' '+calViewYear;
   const offset=(new Date(calViewYear,calViewMonth,1).getDay()+6)%7;
@@ -722,7 +723,16 @@ async function selectDay(key){
   renderDayDetail(dd);
 }
 
-async function loadDay(key){
+async function loadMonthDays(year,month){
+  const pad=n=>String(n).padStart(2,'0');
+  const from=`${year}-${pad(month)}-01`;
+  const dim=new Date(year,month+1,0).getDate();
+  const to=`${year}-${pad(month)}-${pad(dim)}`;
+  try{
+    const rows=await sb(`/rest/v1/tt2_days?user_id=eq.${UID}&date_key=gte.${from}&date_key=lte.${to}`)||[];
+    rows.forEach(r=>{dayCache[r.date_key]=r;});
+  }catch(e){console.warn('Month load error',e);}
+}
   if(dayCache[key])return dayCache[key];
   try{
     const rows=await sb(`/rest/v1/tt2_days?user_id=eq.${UID}&date_key=eq.${key}`);
