@@ -1,0 +1,17 @@
+{
+  "name": "TrainingTrack",
+  "short_name": "TrainingTrack",
+  "description": "Dein mystischer Trainingsbegleiter",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0a080f",
+  "theme_color": "#0a080f",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
