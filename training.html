@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<title>TrainingTrack</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TrainingTrack">
+<meta name="theme-color" content="#08080f">
+<link rel="apple-touch-icon" href="icon-training.png">
+<link rel="icon" type="image/png" href="icon-training.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08080f;--surface:#0e0e1a;--card:#121220;--card2:#16162a;
+  --border:#252340;--accent:#a78bfa;--accent-dim:rgba(167,139,250,0.12);
+  --green:#34d399;--green-dim:rgba(52,211,153,0.1);
+  --blue:#818cf8;--orange:#fb923c;--red:#f87171;
+  --text:#e8e6f5;--text2:#7c7a99;--text3:#3d3b55;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;padding-bottom:80px;}
+
+/* LOGIN */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;gap:20px;}
+.login-icon svg{filter:drop-shadow(0 0 20px rgba(167,139,250,0.3));}
+.login-title{font-size:2rem;font-weight:800;letter-spacing:-1px;}
+.login-title span{color:var(--accent);}
+.login-sub{color:var(--text2);font-size:0.88rem;text-align:center;max-width:280px;line-height:1.5;}
+.login-card{background:var(--card);border-radius:24px;padding:28px;width:100%;max-width:360px;border:1px solid var(--border);display:flex;flex-direction:column;gap:14px;}
+.login-error{color:var(--red);font-size:0.8rem;text-align:center;display:none;}
+
+/* SHARED */
+.ig label{display:block;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text2);margin-bottom:6px;}
+.ig .iu{position:relative;}
+.ig input,.ig select{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:12px 48px 12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;outline:none;transition:border-color 0.2s;}
+.ig input:focus,.ig select:focus{border-color:var(--accent);}
+.ig .unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:0.8rem;pointer-events:none;}
+.btn-go{background:var(--accent);color:#080b12;border:none;border-radius:14px;padding:15px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;width:100%;}
+.btn-go:hover{opacity:0.9;}
+.btn-cancel{background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:14px;padding:13px;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;flex:1;}
+.sec-title{font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);margin-bottom:10px;}
+
+/* APP */
+#app-screen{display:none;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;position:sticky;top:0;background:var(--bg);z-index:20;border-bottom:1px solid var(--border);}
+.hdr-logo{font-size:1.3rem;font-weight:800;letter-spacing:-0.5px;}
+.hdr-logo span{color:var(--accent);}
+.hdr-date{font-size:0.75rem;color:var(--text2);margin-top:1px;}
+.hdr-right{display:flex;gap:8px;}
+.icon-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text2);padding:8px 11px;cursor:pointer;font-size:1rem;transition:all 0.15s;line-height:1;font-family:'DM Sans',sans-serif;font-weight:700;}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent);}
+.icon-btn.active{color:var(--accent);border-color:var(--accent);background:var(--accent-dim);}
+
+/* SYNC */
+.sync-bar{display:flex;align-items:center;justify-content:center;gap:6px;padding:5px 18px;font-size:0.7rem;color:var(--text3);border-bottom:1px solid var(--border);}
+.sync-bar.syncing{color:var(--orange);}.sync-bar.synced{color:var(--green);}.sync-bar.error{color:var(--red);}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;gap:3px;}
+.nav-item .ni{font-size:1.3rem;}
+.nav-item .nl{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);}
+.nav-item.active .nl{color:var(--accent);}
+
+/* SCREENS */
+.screen{display:none;}.screen.active{display:block;}
+.content{padding:16px 16px 20px;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+
+/* CALENDAR */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-nav-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 14px;cursor:pointer;font-size:1rem;}
+.cal-month-label{font-size:1rem;font-weight:700;}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:6px;}
+.cal-weekdays span{font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;padding:4px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.15s;position:relative;gap:2px;}
+.cal-day:hover{background:var(--card2);}
+.cal-day.empty{cursor:default;}
+.cal-day.today{font-weight:800;color:var(--accent);}
+.cal-day.selected{background:var(--accent);color:#080b12;font-weight:800;}
+.cal-day .day-dot{width:5px;height:5px;border-radius:50%;}
+.cal-day.has-training .day-dot{background:var(--green);}
+.cal-day.has-pause .day-dot{background:var(--text3);}
+.cal-day.selected .day-dot{background:#080b12;}
+
+/* DAY DETAIL */
+.day-card{background:var(--card);border-radius:20px;border:1px solid var(--border);overflow:hidden;}
+.day-card-header{padding:16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.day-card-title{font-size:1rem;font-weight:700;}
+.day-card-sub{font-size:0.75rem;color:var(--text2);margin-top:2px;}
+.day-actions{display:flex;gap:8px;}
+.day-action-btn{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text2);padding:7px 12px;cursor:pointer;font-size:0.8rem;font-weight:600;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.day-action-btn:hover{color:var(--accent);border-color:var(--accent);}
+.day-action-btn.pause{color:var(--text3);}
+.day-action-btn.pause.active{color:var(--text2);background:var(--card2);}
+
+/* TRAINING TYPE BADGE */
+.type-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;font-size:0.75rem;font-weight:700;}
+
+/* EXERCISES */
+.exercise-list{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;}
+.exercise-item{background:var(--bg);border-radius:12px;padding:12px 14px;}
+.exercise-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.exercise-name{font-size:0.9rem;font-weight:700;}
+.sets-row{display:flex;gap:6px;flex-wrap:wrap;}
+.set-badge{background:var(--card);border-radius:8px;padding:5px 10px;font-size:0.75rem;color:var(--text2);}
+.set-badge b{color:var(--accent);}
+.add-set-btn{background:var(--accent-dim);border:1px dashed var(--accent);border-radius:8px;padding:5px 10px;font-size:0.75rem;color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;}
+.add-exercise-btn{margin:0 14px 14px;background:var(--accent-dim);border:1.5px dashed var(--accent);border-radius:12px;padding:11px;width:calc(100% - 28px);color:var(--accent);font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;text-align:center;}
+
+/* TRAININGSTYPEN */
+.type-list{display:flex;flex-direction:column;gap:8px;}
+.type-item{background:var(--card);border-radius:14px;padding:13px 16px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.type-color{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+.type-info{flex:1;}
+.type-name{font-size:0.9rem;font-weight:700;}
+.type-count{font-size:0.72rem;color:var(--text2);margin-top:1px;}
+.type-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 6px;border-radius:6px;font-size:0.9rem;}
+.type-del:hover{color:var(--red);}
+.btn-add-new{background:var(--accent-dim);border:1.5px dashed var(--accent);border-radius:14px;padding:12px;width:100%;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat-box{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);}
+.stat-val{font-size:1.8rem;font-weight:800;color:var(--accent);}
+.stat-lbl{font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-top:3px;}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);}
+.overlay.open{display:flex;}
+.modal{background:var(--card);border-radius:24px 24px 0 0;padding:22px 18px 36px;width:100%;max-width:520px;border-top:1px solid var(--border);animation:slideUp 0.22s ease;max-height:90vh;overflow-y:auto;}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-title{font-size:1.1rem;font-weight:800;margin-bottom:16px;}
+.modal-actions{display:flex;gap:10px;margin-top:12px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.modal-grid .full{grid-column:1/-1;}
+
+/* COLOR PICKER */
+.color-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.15s;}
+.color-opt.selected{border-color:var(--text);}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text2);font-size:0.9rem;gap:10px;}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-hint{font-size:0.78rem;color:var(--text3);text-align:center;padding:20px;font-style:italic;}
+.del-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.9rem;padding:3px 5px;border-radius:6px;}
+.del-btn:hover{color:var(--red);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-icon">
+    <svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <circle cx="45" cy="45" r="45" fill="#121220"/>
+      <!-- Dumbbell -->
+      <rect x="30" y="41" width="30" height="8" rx="3" fill="#2d2650" stroke="#a78bfa" stroke-width="1.5"/>
+      <rect x="18" y="34" width="10" height="22" rx="4" fill="#1e1b35" stroke="#a78bfa" stroke-width="1.5"/>
+      <rect x="62" y="34" width="10" height="22" rx="4" fill="#1e1b35" stroke="#a78bfa" stroke-width="1.5"/>
+      <rect x="14" y="38" width="8" height="14" rx="3" fill="#a78bfa" opacity="0.7"/>
+      <rect x="68" y="38" width="8" height="14" rx="3" fill="#a78bfa" opacity="0.7"/>
+      <!-- Stars -->
+      <circle cx="25" cy="25" r="1.5" fill="#a78bfa" opacity="0.8"/>
+      <circle cx="65" cy="22" r="1.2" fill="#34d399" opacity="0.7"/>
+      <circle cx="70" cy="60" r="1" fill="#a78bfa" opacity="0.6"/>
+      <circle cx="20" cy="62" r="1.2" fill="#34d399" opacity="0.5"/>
+      <!-- Glow -->
+      <ellipse cx="45" cy="45" rx="32" ry="10" fill="#a78bfa" opacity="0.05"/>
+    </svg>
+  </div>
+  <div class="login-title">Training<span>Track</span></div>
+  <div class="login-sub">Melde dich an um dein Training zu verfolgen.</div>
+  <div class="login-card">
+    <div class="ig"><label>Benutzername</label><input type="text" id="login-user" placeholder="z.B. hexe123" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()"></div>
+    <div class="ig"><label>Passwort</label>
+      <div class="iu" style="position:relative">
+        <input type="password" id="login-pw" placeholder="Dein Passwort..." style="padding-right:44px" onkeydown="if(event.key==='Enter')doLogin()">
+        <button onclick="togglePW()" type="button" id="pw-eye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--accent);font-size:1rem;padding:0;line-height:1">&#128065;</button>
+      </div>
+    </div>
+    <div class="login-error" id="login-error">Benutzername und Passwort eingeben!</div>
+    <button class="btn-go" onclick="doLogin()">Einloggen &#10230;</button>
+    <div style="font-size:0.72rem;color:var(--text3);text-align:center">Gleicher Login wie NutriTrack &#8211; oder neuen Account anlegen.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="hdr">
+    <div>
+      <div class="hdr-logo">Training<span>Track</span></div>
+      <div class="hdr-date" id="hdr-date"></div>
+    </div>
+    <div class="hdr-right">
+      <button class="icon-btn" onclick="doLogout()" style="font-size:0.78rem;padding:8px 12px;color:var(--text3)">&#128274;</button>
+    </div>
+  </div>
+  <div class="sync-bar" id="sync-bar"><div class="sync-dot"></div><span id="sync-text">Verbinde...</span></div>
+
+  <!-- KALENDER SCREEN -->
+  <div id="screen-kalender" class="screen active">
+    <div class="content">
+      <div>
+        <div class="cal-header">
+          <button class="cal-nav-btn" onclick="calMonth(-1)">&#8249;</button>
+          <div class="cal-month-label" id="cal-month-label"></div>
+          <button class="cal-nav-btn" onclick="calMonth(1)">&#8250;</button>
+        </div>
+        <div class="cal-weekdays"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <!-- SELECTED DAY -->
+      <div id="day-detail" style="display:none">
+        <div class="sec-title" id="day-detail-title">Montag, 27. Mai</div>
+        <div class="day-card">
+          <div class="day-card-header">
+            <div>
+              <div class="day-card-title" id="day-type-name">Kein Training geplant</div>
+              <div class="day-card-sub" id="day-type-sub"></div>
+            </div>
+            <div class="day-actions">
+              <button class="day-action-btn" onclick="openAssignModal()">&#127947; Zuweisen</button>
+              <button class="day-action-btn pause" id="pause-btn" onclick="togglePause()">&#9749; Pause</button>
+            </div>
+          </div>
+          <div id="exercise-container">
+            <div class="empty-hint">Kein Training f&#252;r diesen Tag.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAINING SCREEN -->
+  <div id="screen-training" class="screen">
+    <div class="content">
+      <div>
+        <div class="sec-title">Meine Trainingstypen</div>
+        <div class="type-list" id="type-list"><div class="loading"><div class="spin"></div></div></div>
+        <button class="btn-add-new" style="margin-top:10px" onclick="openTypeModal()">+ Neuen Trainingstyp</button>
+      </div>
+      <div>
+        <div class="sec-title">Statistik</div>
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-box"><div class="stat-val" id="stat-total">0</div><div class="stat-lbl">Trainings gesamt</div></div>
+          <div class="stat-box"><div class="stat-val" id="stat-month">0</div><div class="stat-lbl">Diesen Monat</div></div>
+          <div class="stat-box"><div class="stat-val" id="stat-streak">0</div><div class="stat-lbl">Aktuelle Serie</div></div>
+          <div class="stat-box"><div class="stat-val" id="stat-pause">0</div><div class="stat-lbl">Pausentage</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-kalender" onclick="switchScreen('kalender')">
+      <div class="ni">&#128197;</div><div class="nl">Kalender</div>
+    </div>
+    <div class="nav-item" id="nav-training" onclick="switchScreen('training')">
+      <div class="ni">&#127947;</div><div class="nl">Training</div>
+    </div>
+  </nav>
+</div>
+
+<!-- ASSIGN TRAINING MODAL -->
+<div class="overlay" id="modal-assign" onclick="closeModal('modal-assign',event)">
+  <div class="modal">
+    <div class="modal-title" id="assign-title">Training zuweisen</div>
+    <div class="ig" style="margin-bottom:12px">
+      <label>Trainingstyp w&#228;hlen</label>
+      <select id="assign-select" style="padding-right:14px">
+        <option value="">&#8211; Typ w&#228;hlen &#8211;</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-assign')">Abbrechen</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="assignTraining()">Zuweisen &#10003;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD EXERCISE MODAL -->
+<div class="overlay" id="modal-exercise" onclick="closeModal('modal-exercise',event)">
+  <div class="modal">
+    <div class="modal-title">&#220;bung hinzuf&#252;gen</div>
+    <div class="ig full" style="margin-bottom:10px"><label>&#220;bungsname</label><input type="text" id="ex-name" placeholder="z.B. Bankdr&#252;cken"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-exercise')">Abbrechen</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="addExercise()">Hinzuf&#252;gen &#10003;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SET MODAL -->
+<div class="overlay" id="modal-set" onclick="closeModal('modal-set',event)">
+  <div class="modal">
+    <div class="modal-title" id="set-modal-title">Satz hinzuf&#252;gen</div>
+    <div class="modal-grid">
+      <div class="ig"><label>Wiederholungen</label><div class="iu"><input type="number" id="set-reps" placeholder="10"><span class="unit">Wdh</span></div></div>
+      <div class="ig"><label>Gewicht</label><div class="iu"><input type="number" id="set-weight" placeholder="0" step="0.5"><span class="unit">kg</span></div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-set')">Abbrechen</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveSet()">Speichern &#10003;</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRAININGSTYP MODAL -->
+<div class="overlay" id="modal-type" onclick="closeModal('modal-type',event)">
+  <div class="modal">
+    <div class="modal-title">Trainingstyp erstellen</div>
+    <div class="ig full" style="margin-bottom:10px"><label>Name</label><input type="text" id="type-name" placeholder="z.B. Gym A &#8211; Oberk&#246;rper"></div>
+    <div class="ig full" style="margin-bottom:10px">
+      <label>Farbe</label>
+      <div class="color-picker" id="color-picker"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-type')">Abbrechen</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveType()">Speichern &#10003;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://iojktoupfrfembgwclqe.supabase.co';
+const SB_KEY='sb_publishable_h8TqNTprJJV-iF5A5d-LpA_bwGaZjBK';
+let UID=localStorage.getItem('tt_uid')||'';
+
+const COLORS=['#a78bfa','#34d399','#fb923c','#f9a8d4','#818cf8','#f87171','#fbbf24','#38bdf8','#a3e635','#e879f9'];
+const MONTHS_DE=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const DAYS_FULL=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const MONTHS_SH=['Jan','Feb','M\u00e4r','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+let calViewYear, calViewMonth, selectedDateKey=todayKey();
+let trainingTypes=[], dayCache={};
+let activeSetExerciseIdx=null, selectedColor=COLORS[0];
+
+function todayKey(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function dateFromKey(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m,d);}
+function keyFromDate(dt){return`${dt.getFullYear()}-${String(dt.getMonth()).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
+
+// ── SUPABASE ──
+async function sb(path,method='GET',body=null){
+  const prefer=method==='POST'?'resolution=merge-duplicates,return=representation':method==='PATCH'?'return=representation':'';
+  const opts={method,headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':prefer}};
+  if(body)opts.body=JSON.stringify(body);
+  const res=await fetch(SB_URL+path,opts);
+  if(!res.ok){const t=await res.text();throw new Error(t);}
+  if(res.status===204)return null;
+  return res.json();
+}
+function setSS(s,t){document.getElementById('sync-bar').className='sync-bar '+s;document.getElementById('sync-text').textContent=t;}
+
+// ── LOGIN ──
+function hashPW(user,pw){
+  let hash=0;
+  const str='nt5_'+user.toLowerCase().trim()+'_'+pw.trim();
+  for(let i=0;i<str.length;i++){hash=((hash<<5)-hash)+str.charCodeAt(i);hash|=0;}
+  return 'u_'+Math.abs(hash).toString(36);
+}
+function togglePW(){
+  const inp=document.getElementById('login-pw'),eye=document.getElementById('pw-eye');
+  if(inp.type==='password'){inp.type='text';eye.textContent='\uD83D\uDE48';}
+  else{inp.type='password';eye.textContent='\uD83D\uDC41';}
+}
+async function doLogin(){
+  const user=document.getElementById('login-user').value.trim();
+  const pw=document.getElementById('login-pw').value.trim();
+  const err=document.getElementById('login-error');
+  if(!user||!pw){err.style.display='block';return;}
+  err.style.display='none';
+  UID=hashPW(user,pw);
+  localStorage.setItem('tt_uid',UID);
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  await init();
+}
+function doLogout(){
+  if(!confirm('Wirklich ausloggen?'))return;
+  localStorage.removeItem('tt_uid');
+  location.reload();
+}
+
+// ── INIT ──
+async function init(){
+  setSS('syncing','Verbinde...');
+  try{
+    await ensureTables();
+    setSS('synced','Verbunden');
+    await loadTypes();
+    const d=new Date();
+    calViewYear=d.getFullYear();calViewMonth=d.getMonth();
+    renderCal();
+    updateHeader();
+    selectDay(todayKey());
+    renderStats();
+  }catch(e){setSS('error','Fehler: '+e.message.substring(0,30));}
+}
+
+async function ensureTables(){
+  // Check if tables exist by querying
+  await sb(`/rest/v1/tt_types?user_id=eq.${UID}&limit=1`);
+}
+
+// ── TYPES ──
+async function loadTypes(){
+  try{trainingTypes=await sb(`/rest/v1/tt_types?user_id=eq.${UID}&order=name`)||[];}
+  catch(e){trainingTypes=[];}
+  renderTypeList();
+}
+
+function renderTypeList(){
+  const c=document.getElementById('type-list');
+  if(!trainingTypes.length){c.innerHTML='<div class="empty-hint">Noch keine Trainingstypen. Lege einen an!</div>';return;}
+  c.innerHTML=trainingTypes.map(t=>`
+    <div class="type-item">
+      <div class="type-color" style="background:${t.color}"></div>
+      <div class="type-info">
+        <div class="type-name">${t.name}</div>
+      </div>
+      <button class="type-del" onclick="deleteType('${t.id}')">&#10005;</button>
+    </div>`).join('');
+  // also update assign select
+  const sel=document.getElementById('assign-select');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">&#8211; Typ w&#228;hlen &#8211;</option>';
+  trainingTypes.forEach(t=>sel.add(new Option(t.name,t.id)));
+  if(cur)sel.value=cur;
+}
+
+function openTypeModal(){
+  document.getElementById('type-name').value='';
+  selectedColor=COLORS[0];
+  renderColorPicker();
+  document.getElementById('modal-type').classList.add('open');
+  setTimeout(()=>document.getElementById('type-name').focus(),80);
+}
+function renderColorPicker(){
+  document.getElementById('color-picker').innerHTML=COLORS.map(c=>`
+    <div class="color-opt ${c===selectedColor?'selected':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
+}
+function pickColor(c){selectedColor=c;renderColorPicker();}
+
+async function saveType(){
+  const name=document.getElementById('type-name').value.trim();
+  if(!name){document.getElementById('type-name').focus();return;}
+  try{
+    const res=await sb('/rest/v1/tt_types','POST',{user_id:UID,name,color:selectedColor});
+    if(res&&res[0])trainingTypes.push(res[0]);
+    else await loadTypes();
+    renderTypeList();
+    closeModal('modal-type');
+  }catch(e){alert('Fehler: '+e.message);}
+}
+async function deleteType(id){
+  if(!confirm('Trainingstyp l\u00f6schen?'))return;
+  try{
+    await sb(`/rest/v1/tt_types?id=eq.${id}`,'DELETE');
+    trainingTypes=trainingTypes.filter(t=>t.id!==id);
+    renderTypeList();
+  }catch(e){alert('Fehler');}
+}
+
+// ── DAY DATA ──
+async function loadDay(key){
+  if(dayCache[key])return dayCache[key];
+  try{
+    const rows=await sb(`/rest/v1/tt_days?user_id=eq.${UID}&date_key=eq.${key}`);
+    if(rows&&rows.length){dayCache[key]=rows[0];return rows[0];}
+  }catch(e){}
+  return null;
+}
+async function saveDay(key,data){
+  dayCache[key]=data;
+  setSS('syncing','Speichern...');
+  try{
+    await fetch(SB_URL+'/rest/v1/tt_days?on_conflict=user_id,date_key',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({user_id:UID,date_key:key,...data,updated_at:new Date().toISOString()})
+    });
+    setSS('synced','Gespeichert');
+    renderCal();
+  }catch(e){setSS('error','Fehler beim Speichern');}
+}
+
+// ── CALENDAR ──
+function calMonth(delta){
+  calViewMonth+=delta;
+  if(calViewMonth<0){calViewMonth=11;calViewYear--;}
+  if(calViewMonth>11){calViewMonth=0;calViewYear++;}
+  renderCal();
+}
+async function renderCal(){
+  document.getElementById('cal-month-label').textContent=MONTHS_DE[calViewMonth]+' '+calViewYear;
+  const grid=document.getElementById('cal-grid');
+  const today=todayKey();
+  const offset=(new Date(calViewYear,calViewMonth,1).getDay()+6)%7;
+  const dim=new Date(calViewYear,calViewMonth+1,0).getDate();
+
+  // Load all days in month from cache or quick check
+  let html='';
+  for(let i=0;i<offset;i++)html+='<div class="cal-day empty"></div>';
+  for(let d=1;d<=dim;d++){
+    const key=`${calViewYear}-${String(calViewMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayData=dayCache[key];
+    let cls='cal-day';
+    if(key===today)cls+=' today';
+    if(key===selectedDateKey)cls+=' selected';
+    let dot='';
+    if(dayData){
+      if(dayData.is_pause)cls+=' has-pause';
+      else if(dayData.type_id)cls+=' has-training';
+      dot='<div class="day-dot"></div>';
+    }
+    html+=`<div class="${cls}" onclick="selectDay('${key}')">${d}${dot}</div>`;
+  }
+  grid.innerHTML=html;
+}
+
+async function selectDay(key){
+  selectedDateKey=key;
+  renderCal();
+  const d=dateFromKey(key);
+  const isToday=key===todayKey();
+  document.getElementById('day-detail-title').textContent=
+    (isToday?'Heute':'')+(isToday?', ':'')+DAYS_FULL[d.getDay()]+', '+d.getDate()+'. '+MONTHS_DE[d.getMonth()];
+  document.getElementById('day-detail').style.display='block';
+
+  const dayData=await loadDay(key);
+  renderDayDetail(dayData);
+}
+
+function renderDayDetail(dayData){
+  const pauseBtn=document.getElementById('pause-btn');
+  if(dayData&&dayData.is_pause){
+    document.getElementById('day-type-name').textContent='\uD83C\uDFE0 Pausentag';
+    document.getElementById('day-type-sub').textContent='Erhol dich gut!';
+    pauseBtn.classList.add('active');
+    document.getElementById('exercise-container').innerHTML='<div class="empty-hint">Heute ist Pause. &#128522;</div>';
+    return;
+  }
+  pauseBtn.classList.remove('active');
+  if(dayData&&dayData.type_id){
+    const type=trainingTypes.find(t=>t.id===dayData.type_id);
+    if(type){
+      document.getElementById('day-type-name').textContent=type.name;
+      document.getElementById('day-type-sub').textContent='Training';
+    }
+    renderExercises(dayData.exercises||[]);
+  } else {
+    document.getElementById('day-type-name').textContent='Kein Training geplant';
+    document.getElementById('day-type-sub').textContent='Typ zuweisen oder als Pause markieren';
+    document.getElementById('exercise-container').innerHTML='<div class="empty-hint">Kein Training f\u00fcr diesen Tag.</div>';
+  }
+}
+
+function renderExercises(exercises){
+  const c=document.getElementById('exercise-container');
+  if(!exercises.length){
+    c.innerHTML=`<div class="empty-hint">Noch keine \u00dcbungen.</div><button class="add-exercise-btn" onclick="openExerciseModal()">+ \u00dcbung hinzuf\u00fcgen</button>`;
+    return;
+  }
+  c.innerHTML=`<div class="exercise-list">${exercises.map((ex,i)=>`
+    <div class="exercise-item">
+      <div class="exercise-header">
+        <div class="exercise-name">${ex.name}</div>
+        <button class="del-btn" onclick="deleteExercise(${i})">&#10005;</button>
+      </div>
+      <div class="sets-row">
+        ${(ex.sets||[]).map((s,si)=>`<div class="set-badge" onclick="deleteSet(${i},${si})"><b>${s.reps}</b> x ${s.weight}kg</div>`).join('')}
+        <button class="add-set-btn" onclick="openSetModal(${i})">+ Satz</button>
+      </div>
+    </div>`).join('')}
+  </div>
+  <button class="add-exercise-btn" onclick="openExerciseModal()">+ \u00dcbung hinzuf\u00fcgen</button>`;
+}
+
+// ── ASSIGN ──
+function openAssignModal(){
+  document.getElementById('assign-title').textContent='Training f\u00fcr '+document.getElementById('day-detail-title').textContent;
+  document.getElementById('modal-assign').classList.add('open');
+}
+async function assignTraining(){
+  const typeId=document.getElementById('assign-select').value;
+  if(!typeId){alert('Bitte Trainingstyp w\u00e4hlen.');return;}
+  const existing=await loadDay(selectedDateKey)||{};
+  const data={type_id:typeId,is_pause:false,exercises:existing.exercises||[]};
+  await saveDay(selectedDateKey,data);
+  closeModal('modal-assign');
+  renderDayDetail({...data,type_id:typeId});
+}
+
+// ── PAUSE ──
+async function togglePause(){
+  const existing=await loadDay(selectedDateKey)||{};
+  const isPause=!existing.is_pause;
+  const data={type_id:isPause?null:(existing.type_id||null),is_pause:isPause,exercises:existing.exercises||[]};
+  await saveDay(selectedDateKey,data);
+  renderDayDetail(isPause?{is_pause:true}:{...data});
+}
+
+// ── EXERCISES ──
+function openExerciseModal(){
+  document.getElementById('ex-name').value='';
+  document.getElementById('modal-exercise').classList.add('open');
+  setTimeout(()=>document.getElementById('ex-name').focus(),80);
+}
+async function addExercise(){
+  const name=document.getElementById('ex-name').value.trim();
+  if(!name){document.getElementById('ex-name').focus();return;}
+  const existing=await loadDay(selectedDateKey)||{exercises:[]};
+  const exercises=[...(existing.exercises||[]),{name,sets:[]}];
+  await saveDay(selectedDateKey,{...existing,exercises});
+  closeModal('modal-exercise');
+  renderExercises(exercises);
+}
+async function deleteExercise(idx){
+  if(!confirm('\u00dcbung l\u00f6schen?'))return;
+  const existing=await loadDay(selectedDateKey)||{exercises:[]};
+  existing.exercises.splice(idx,1);
+  await saveDay(selectedDateKey,existing);
+  renderExercises(existing.exercises);
+}
+
+// ── SETS ──
+function openSetModal(exerciseIdx){
+  activeSetExerciseIdx=exerciseIdx;
+  document.getElementById('modal-set').classList.add('open');
+  document.getElementById('set-reps').value='';
+  document.getElementById('set-weight').value='';
+  setTimeout(()=>document.getElementById('set-reps').focus(),80);
+}
+async function saveSet(){
+  const reps=parseInt(document.getElementById('set-reps').value)||0;
+  const weight=parseFloat(document.getElementById('set-weight').value)||0;
+  if(!reps){document.getElementById('set-reps').focus();return;}
+  const existing=await loadDay(selectedDateKey)||{exercises:[]};
+  existing.exercises[activeSetExerciseIdx].sets.push({reps,weight});
+  await saveDay(selectedDateKey,existing);
+  closeModal('modal-set');
+  renderExercises(existing.exercises);
+}
+async function deleteSet(exIdx,setIdx){
+  const existing=await loadDay(selectedDateKey)||{exercises:[]};
+  existing.exercises[exIdx].sets.splice(setIdx,1);
+  await saveDay(selectedDateKey,existing);
+  renderExercises(existing.exercises);
+}
+
+// ── STATS ──
+async function renderStats(){
+  const today=new Date();
+  const thisMonth=`${today.getFullYear()}-${String(today.getMonth()).padStart(2,'0')}`;
+  try{
+    const allDays=await sb(`/rest/v1/tt_days?user_id=eq.${UID}&is_pause=eq.false&type_id=not.is.null`)||[];
+    const pauseDays=await sb(`/rest/v1/tt_days?user_id=eq.${UID}&is_pause=eq.true`)||[];
+    const monthDays=allDays.filter(d=>d.date_key.startsWith(thisMonth));
+    document.getElementById('stat-total').textContent=allDays.length;
+    document.getElementById('stat-month').textContent=monthDays.length;
+    document.getElementById('stat-pause').textContent=pauseDays.length;
+    // streak
+    let streak=0;
+    const sortedDays=allDays.map(d=>d.date_key).sort().reverse();
+    const todayK=todayKey();
+    for(let i=0;i<sortedDays.length;i++){
+      const expected=keyFromDate(new Date(new Date(todayK).setDate(new Date(todayK).getDate()-i)));
+      if(sortedDays[i]===expected)streak++;
+      else break;
+    }
+    document.getElementById('stat-streak').textContent=streak;
+  }catch(e){}
+}
+
+// ── NAV ──
+function switchScreen(s){
+  ['kalender','training'].forEach(n=>{
+    document.getElementById('screen-'+n).classList.toggle('active',n===s);
+    document.getElementById('nav-'+n).classList.toggle('active',n===s);
+  });
+  if(s==='training')renderStats();
+}
+
+// ── HELPERS ──
+function updateHeader(){
+  const d=new Date();
+  document.getElementById('hdr-date').textContent=d.getDate()+'. '+MONTHS_SH[d.getMonth()]+' '+d.getFullYear();
+}
+function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(el=>el.classList.remove('open'));});
+
+// ── BOOT ──
+(function boot(){
+  const savedUID=localStorage.getItem('tt_uid');
+  if(savedUID){
+    UID=savedUID;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    init();
+  }
+})();
+</script>
+</body>
+</html>
