@@ -534,9 +534,27 @@ function renderVorlageList(){
 }
 
 function formatExGoal(ex){
-  if(ex.type==='kraft')return`${ex.sets||0}x${ex.reps||0} @ ${ex.weight||0}kg`;
-  if(ex.type==='cardio')return`${ex.time||'?'} | ${ex.dist||0}km | ${ex.incline||0}%`;
-  if(ex.type==='carry')return`${ex.cweight||0}kg | ${ex.cdist||0}m`;
+  if(ex.type==='kraft'){
+    const parts=[];
+    if(ex.sets||ex.reps)parts.push(`${ex.sets||'?'}x${ex.reps||'?'}`);
+    if(ex.weight)parts.push(`${ex.weight}kg`);
+    return parts.join(' · ')||'–';
+  }
+  if(ex.type==='cardio'){
+    const parts=[];
+    if(ex.time)parts.push(ex.time);
+    if(ex.dist)parts.push(ex.dist+'km');
+    if(ex.incline)parts.push(ex.incline+'%');
+    return parts.join(' | ')||'–';
+  }
+  if(ex.type==='carry'){
+    const parts=[];
+    if(ex.cweight)parts.push(ex.cweight+'kg');
+    if(ex.cdist)parts.push(ex.cdist+'m');
+    if(ex.ctime)parts.push(ex.ctime);
+    if(ex.cspeed)parts.push(ex.cspeed+'km/h');
+    return parts.join(' | ')||'–';
+  }
   return ex.note||'';
 }
 
@@ -555,16 +573,57 @@ function editVorlage(id){openVorlageModal(vorlagen.find(v=>v.id===id));}
 
 function renderVorlageExList(){
   const c=document.getElementById('vorlage-ex-list');
+  if(!vorlageExercises.length){c.innerHTML='';return;}
   c.innerHTML=vorlageExercises.map((ex,i)=>`
     <div style="display:flex;align-items:center;background:var(--bg);border-radius:10px;padding:9px 12px;gap:8px">
+      <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+        <button onclick="moveVorlageEx(${i},-1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.75rem;padding:0;line-height:1;${i===0?'opacity:0.2':''}">▲</button>
+        <button onclick="moveVorlageEx(${i},1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.75rem;padding:0;line-height:1;${i===vorlageExercises.length-1?'opacity:0.2':''}">▼</button>
+      </div>
       <div style="flex:1">
         <div style="font-size:0.85rem;font-weight:700">${ex.name}</div>
-        <div style="font-size:0.72rem;color:var(--text3)">${EX_TYPES[ex.type]||''} &middot; ${formatExGoal(ex)}</div>
+        <div style="font-size:0.72rem;color:var(--text3)">${EX_TYPES[ex.type]||''} · ${formatExGoal(ex)}</div>
       </div>
+      <button onclick="editVorlageEx(${i})" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);cursor:pointer;padding:4px 8px;font-size:0.75rem">✏️</button>
       <button class="del-btn" onclick="removeVorlageEx(${i})">✕</button>
     </div>`).join('');
 }
 function removeVorlageEx(i){vorlageExercises.splice(i,1);renderVorlageExList();}
+function moveVorlageEx(i,dir){
+  const j=i+dir;
+  if(j<0||j>=vorlageExercises.length)return;
+  [vorlageExercises[i],vorlageExercises[j]]=[vorlageExercises[j],vorlageExercises[i]];
+  renderVorlageExList();
+}
+let editingVorlageExIdx=null;
+function editVorlageEx(i){
+  editingVorlageExIdx=i;
+  const ex=vorlageExercises[i];
+  document.getElementById('vex-name').value=ex.name;
+  switchExType(ex.type||'kraft');
+  if(ex.type==='kraft'){document.getElementById('vex-sets').value=ex.sets||'';document.getElementById('vex-reps').value=ex.reps||'';document.getElementById('vex-weight').value=ex.weight||'';}
+  else if(ex.type==='cardio'){document.getElementById('vex-time').value=ex.time||'';document.getElementById('vex-dist').value=ex.dist||'';document.getElementById('vex-incline').value=ex.incline||'';}
+  else if(ex.type==='carry'){document.getElementById('vex-cweight').value=ex.cweight||'';document.getElementById('vex-cdist').value=ex.cdist||'';document.getElementById('vex-ctime').value=ex.ctime||'';document.getElementById('vex-cspeed').value=ex.cspeed||'';}
+  else{document.getElementById('vex-note').value=ex.note||'';}
+  document.querySelector('#modal-vadd .btn-go').textContent='Aktualisieren ✓';
+  document.querySelector('#modal-vadd .btn-go').onclick=updateVorlageEx;
+  document.getElementById('modal-vadd').classList.add('open');
+}
+function updateVorlageEx(){
+  const name=document.getElementById('vex-name').value.trim();
+  if(!name)return;
+  let ex={name,type:currentExType};
+  if(currentExType==='kraft'){ex.sets=parseInt(document.getElementById('vex-sets').value)||3;ex.reps=parseInt(document.getElementById('vex-reps').value)||10;ex.weight=parseFloat(document.getElementById('vex-weight').value)||0;}
+  else if(currentExType==='cardio'){ex.time=document.getElementById('vex-time').value||'';ex.dist=parseFloat(document.getElementById('vex-dist').value)||0;ex.incline=parseFloat(document.getElementById('vex-incline').value)||0;}
+  else if(currentExType==='carry'){ex.cweight=parseFloat(document.getElementById('vex-cweight').value)||0;ex.cdist=parseFloat(document.getElementById('vex-cdist').value)||0;ex.ctime=document.getElementById('vex-ctime').value||'';ex.cspeed=parseFloat(document.getElementById('vex-cspeed').value)||0;}
+  else{ex.note=document.getElementById('vex-note').value||'';}
+  vorlageExercises[editingVorlageExIdx]=ex;
+  editingVorlageExIdx=null;
+  renderVorlageExList();
+  closeModal('modal-vadd');
+  document.querySelector('#modal-vadd .btn-go').textContent='Hinzufügen ✓';
+  document.querySelector('#modal-vadd .btn-go').onclick=addVorlageEx;
+}
 
 async function saveVorlage(){
   const name=document.getElementById('vname').value.trim();
@@ -753,7 +812,7 @@ function renderExercises(exercises,vorlageId){
         <button class="del-btn" onclick="deleteExercise('${ex.name}')">✕</button>
       </div>
       <div class="sets-row">
-        ${sets.map((s,si)=>`<div class="set-badge" onclick="deleteSet('${ex.name}',${si})" title="Klicken zum L\u00f6schen">${formatSet(s,ex.type)}</div>`).join('')}
+        ${sets.map((s,si)=>`<div class="set-badge" onclick="openEditSetModal('${ex.name}',${si},'${ex.type}')" title="Tippen zum Bearbeiten">${formatSet(s,ex.type)}</div>`).join('')}
         <button class="add-set-btn" onclick="openSetModal('${ex.name}','${ex.type}')">+ Eintragen</button>
       </div>
     </div>`;
@@ -878,6 +937,57 @@ async function deleteSet(exName,setIdx){
   const ex=existing.exercises.find(e=>e.name===exName);
   if(ex){ex.sets.splice(setIdx,1);}
   await saveDay(selectedDateKey,existing);renderExercises(existing.exercises,existing.vorlage_id);
+}
+
+let editSetExName='',editSetIdx=-1,editSetType='kraft';
+function openEditSetModal(exName,setIdx,exType){
+  editSetExName=exName;editSetIdx=setIdx;editSetType=exType||'kraft';
+  const dd=dayCache[selectedDateKey];
+  const ex=dd&&dd.exercises&&dd.exercises.find(e=>e.name===exName);
+  const set=ex&&ex.sets&&ex.sets[setIdx];
+  // Reuse set modal but pre-fill
+  activeExName=exName;activeSetType=exType||'kraft';
+  document.getElementById('set-modal-title').textContent=exName+' \u2014 Bearbeiten';
+  ['kraft','cardio','carry','frei'].forEach(t=>{const el=document.getElementById('set-fields-'+t);if(el)el.style.display=t===activeSetType?'block':'none';});
+  if(set){
+    if(exType==='kraft'){document.getElementById('set-reps').value=set.reps||'';document.getElementById('set-weight').value=set.weight||'';}
+    else if(exType==='cardio'){document.getElementById('set-time').value=set.time||'';document.getElementById('set-dist').value=set.dist||'';document.getElementById('set-incline').value=set.incline||'';}
+    else if(exType==='carry'){document.getElementById('set-cweight').value=set.cweight||'';document.getElementById('set-cdist').value=set.cdist||'';document.getElementById('set-ctime').value=set.ctime||'';document.getElementById('set-cspeed').value=set.cspeed||'';}
+    else{document.getElementById('set-note').value=set.note||'';}
+  }
+  // Change save to update
+  document.querySelector('#modal-set .btn-go').textContent='Aktualisieren \u2713';
+  document.querySelector('#modal-set .btn-go').onclick=updateSet;
+  // Add delete button
+  const actions=document.querySelector('#modal-set .modal-actions');
+  if(!document.getElementById('set-delete-btn')){
+    const delBtn=document.createElement('button');
+    delBtn.id='set-delete-btn';
+    delBtn.className='btn-cancel';
+    delBtn.style.color='var(--red)';
+    delBtn.style.borderColor='var(--red)';
+    delBtn.textContent='L\u00f6schen';
+    delBtn.onclick=()=>{deleteSet(editSetExName,editSetIdx);closeModal('modal-set');document.querySelector('#modal-set .btn-go').textContent='Speichern \u2713';document.querySelector('#modal-set .btn-go').onclick=saveSet;document.getElementById('set-delete-btn').remove();};
+    actions.insertBefore(delBtn,actions.firstChild);
+  }
+  document.getElementById('modal-set').classList.add('open');
+}
+async function updateSet(){
+  let set={};
+  if(activeSetType==='kraft'){set={reps:parseInt(document.getElementById('set-reps').value)||0,weight:parseFloat(document.getElementById('set-weight').value)||0};}
+  else if(activeSetType==='cardio'){set={time:document.getElementById('set-time').value||'',dist:parseFloat(document.getElementById('set-dist').value)||0,incline:parseFloat(document.getElementById('set-incline').value)||0};}
+  else if(activeSetType==='carry'){set={cweight:parseFloat(document.getElementById('set-cweight').value)||0,cdist:parseFloat(document.getElementById('set-cdist').value)||0,ctime:document.getElementById('set-ctime').value||'',cspeed:parseFloat(document.getElementById('set-cspeed').value)||0};}
+  else{set={note:document.getElementById('set-note').value||''};}
+  const existing=await loadDay(selectedDateKey)||{exercises:[]};
+  const ex=existing.exercises.find(e=>e.name===editSetExName);
+  if(ex&&ex.sets)ex.sets[editSetIdx]=set;
+  await saveDay(selectedDateKey,existing);
+  closeModal('modal-set');
+  // Reset modal
+  document.querySelector('#modal-set .btn-go').textContent='Speichern \u2713';
+  document.querySelector('#modal-set .btn-go').onclick=saveSet;
+  const delBtn=document.getElementById('set-delete-btn');if(delBtn)delBtn.remove();
+  renderExercises(existing.exercises,existing.vorlage_id);
 }
 
 // STATS
