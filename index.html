@@ -7,17 +7,21 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TrainingTrack">
 <meta name="theme-color" content="#0f0a08">
+<link rel="apple-touch-icon" href="icon-training.png">
+<link rel="icon" type="image/png" href="icon-training.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0f0a08;--surface:#16100d;--card:#1e1510;--card2:#261a13;
-  --border:#3d2a1e;--accent:#c8773a;--accent-dim:rgba(200,119,58,0.12);
-  --green:#e8a87c;--red:#f87171;--blue:#94a3b8;
-  --text:#f5ede6;--text2:#a08878;--text3:#5a3d2e;
-  --gold:#f0b060;--rose:#d4827a;
+  --bg:#0a080f;--surface:#0f0c18;--card:#141020;--card2:#1a1428;
+  --border:#2d1f35;--accent:#9b2335;--accent-dim:rgba(155,35,53,0.15);
+  --green:#c084a0;--red:#f87171;--blue:#818cf8;
+  --text:#f0e8f0;--text2:#8a7090;--text3:#4a3050;
+  --gold:#c89880;--rose:#d4607a;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% -10%, rgba(155,35,53,0.18) 0%, transparent 55%),radial-gradient(ellipse at 15% 80%, rgba(155,35,53,0.08) 0%, transparent 40%),radial-gradient(ellipse at 85% 60%, rgba(192,132,160,0.07) 0%, transparent 40%);pointer-events:none;z-index:0;}
+.screen,.hdr,.sync-bar,.bottom-nav{position:relative;z-index:1;}
 
 /* LOGIN */
 #login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;gap:20px;}
@@ -34,8 +38,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .ig input:focus,.ig select:focus,.ig textarea:focus{border-color:var(--accent);}
 .ig .unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:0.8rem;pointer-events:none;}
 .ig textarea{padding:12px 14px;resize:none;height:80px;}
-.btn-go{background:var(--accent);color:#0f0a08;border:none;border-radius:14px;padding:15px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;width:100%;transition:opacity 0.2s;}
-.btn-go:hover{opacity:0.9;}
+.btn-go{background:var(--accent);color:#f0e8f0;border:none;border-radius:14px;padding:15px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;width:100%;transition:opacity 0.2s;}
+.btn-go:hover{opacity:0.85;}
 .btn-cancel{background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:14px;padding:13px;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;flex:1;}
 .sec-title{font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);margin-bottom:10px;}
 
@@ -60,6 +64,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .nav-item .ni{font-size:1.3rem;}
 .nav-item .nl{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);}
 .nav-item.active .nl{color:var(--accent);}
+.nav-item.active .ni{filter:drop-shadow(0 0 8px rgba(155,35,53,0.9)) drop-shadow(0 0 16px rgba(155,35,53,0.4));}
 
 /* SCREENS */
 .screen{display:none;}.screen.active{display:block;}
@@ -171,9 +176,23 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
 <!-- LOGIN -->
 <div id="login-screen">
-  <div style="font-size:3rem;margin-bottom:-8px">&#127947;</div>
+  <div style="margin-bottom:-8px">
+    <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="45" cy="45" r="45" fill="#141020"/><circle cx="45" cy="45" r="45" fill="url(#aura)"/><defs><radialGradient id="aura" cx="50%" cy="40%" r="60%"><stop offset="0%" stop-color="#9b2335" stop-opacity="0.15"/><stop offset="100%" stop-color="#9b2335" stop-opacity="0"/></radialGradient></defs>
+      <ellipse cx="45" cy="45" rx="32" ry="10" fill="#9b2335" opacity="0.06"/>
+      <rect x="30" y="42" width="30" height="6" rx="3" fill="#2a1838" stroke="#9b2335" stroke-width="1.5"/>
+      <rect x="18" y="34" width="10" height="22" rx="4" fill="#1e1430" stroke="#9b2335" stroke-width="1.5"/>
+      <rect x="62" y="34" width="10" height="22" rx="4" fill="#1e1430" stroke="#9b2335" stroke-width="1.5"/>
+      <rect x="14" y="38" width="8" height="14" rx="3" fill="#9b2335" opacity="0.8"/>
+      <rect x="68" y="38" width="8" height="14" rx="3" fill="#9b2335" opacity="0.8"/>
+      <circle cx="25" cy="25" r="1.5" fill="#9b2335" opacity="0.8"/>
+      <circle cx="65" cy="22" r="1.2" fill="#c084a0" opacity="0.7"/>
+      <circle cx="70" cy="62" r="1" fill="#9b2335" opacity="0.5"/>
+      <circle cx="20" cy="60" r="1.2" fill="#c084a0" opacity="0.5"/>
+    </svg>
+  </div>
   <div class="login-title">Training<span>Track</span></div>
-  <div class="login-sub">Gleicher Login wie NutriTrack &#8211; oder neuen Account anlegen.</div>
+  <div class="login-sub">Gleicher Login wie NutriTrack – oder neuen Account anlegen.</div>
   <div class="login-card">
     <div class="ig"><label>Benutzername</label><input type="text" id="login-user" placeholder="z.B. hexe123" onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()"></div>
     <div class="ig"><label>Passwort</label>
@@ -183,7 +202,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
       </div>
     </div>
     <div class="login-error" id="login-error">Benutzername und Passwort eingeben!</div>
-    <button class="btn-go" onclick="doLogin()">Einloggen &#10230;</button>
+    <button class="btn-go" onclick="doLogin()">Einloggen ⟶</button>
   </div>
 </div>
 
@@ -192,7 +211,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   <div class="hdr">
     <div><div class="hdr-logo">Training<span>Track</span></div><div class="hdr-date" id="hdr-date"></div></div>
     <div class="hdr-right">
-      <button class="icon-btn" onclick="doLogout()" style="font-size:0.78rem;padding:8px 12px;color:var(--text3)">&#128274;</button>
+      <button class="icon-btn" onclick="doLogout()" style="font-size:0.78rem;padding:8px 12px;color:var(--text3)">🔒</button>
     </div>
   </div>
   <div class="sync-bar" id="sync-bar"><div class="sync-dot"></div><span id="sync-text">Verbinde...</span></div>
@@ -202,9 +221,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     <div class="content">
       <div>
         <div class="cal-header">
-          <button class="cal-nav-btn" onclick="calMonth(-1)">&#8249;</button>
+          <button class="cal-nav-btn" onclick="calMonth(-1)">‹</button>
           <div class="cal-month-label" id="cal-month-label"></div>
-          <button class="cal-nav-btn" onclick="calMonth(1)">&#8250;</button>
+          <button class="cal-nav-btn" onclick="calMonth(1)">›</button>
         </div>
         <div class="cal-weekdays"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
         <div class="cal-grid" id="cal-grid"></div>
@@ -218,15 +237,15 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
               <div class="day-card-sub" id="day-type-sub"></div>
             </div>
             <div class="day-actions">
-              <button class="day-action-btn" onclick="openAssignModal()">&#128203; Vorlage</button>
-              <button class="day-action-btn" id="pause-btn" onclick="togglePause()">&#9749; Pause</button>
-              <button class="day-action-btn" onclick="openNotizModal()">&#128221; Notiz</button>
+              <button class="day-action-btn" onclick="openAssignModal()">📋 Vorlage</button>
+              <button class="day-action-btn" id="pause-btn" onclick="togglePause()">☕ Pause</button>
+              <button class="day-action-btn" onclick="openNotizModal()">📝 Notiz</button>
             </div>
           </div>
           <!-- NOTIZ PREVIEW -->
           <div id="notiz-preview" style="display:none"></div>
           <!-- EXERCISES -->
-          <div id="exercise-container"><div class="empty-hint">Vorlage zuweisen oder &#220;bung hinzuf&#252;gen.</div></div>
+          <div id="exercise-container"><div class="empty-hint">Vorlage zuweisen oder Übung hinzufügen.</div></div>
         </div>
       </div>
     </div>
@@ -236,9 +255,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   <div id="screen-vorlagen" class="screen">
     <div class="content">
       <div>
-        <div class="sec-title">Trainingsvorlagen</div>
+        <div class="sec-title">Grimoire – Trainingsvorlagen</div>
         <div class="vorlage-list" id="vorlage-list"><div class="loading"><div class="spin"></div></div></div>
-        <button class="btn-add-new" onclick="openVorlageModal()">+ Neue Vorlage</button>
+        <button class="btn-add-new" onclick="openVorlageModal()">+ Neue Vorlage anlegen</button>
       </div>
       <div>
         <div class="sec-title">Statistik</div>
@@ -253,8 +272,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   </div>
 
   <nav class="bottom-nav">
-    <div class="nav-item active" id="nav-kalender" onclick="switchScreen('kalender')"><div class="ni">&#128197;</div><div class="nl">Kalender</div></div>
-    <div class="nav-item" id="nav-vorlagen" onclick="switchScreen('vorlagen')"><div class="ni">&#127947;</div><div class="nl">Vorlagen</div></div>
+    <div class="nav-item active" id="nav-kalender" onclick="switchScreen('kalender')"><div class="ni">📜</div><div class="nl">Chronik</div></div>
+    <div class="nav-item" id="nav-vorlagen" onclick="switchScreen('vorlagen')"><div class="ni">⚔️</div><div class="nl">Grimoire</div></div>
   </nav>
 </div>
 
@@ -262,12 +281,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 <div class="overlay" id="modal-assign" onclick="closeModal('modal-assign',event)">
   <div class="modal">
     <div class="modal-title">Vorlage zuweisen</div>
-    <div class="ig" style="margin-bottom:12px"><label>Vorlage w&#228;hlen</label>
-      <select id="assign-select" style="padding-right:14px"><option value="">&#8211; W&#228;hlen &#8211;</option></select>
+    <div class="ig" style="margin-bottom:12px"><label>Vorlage wählen</label>
+      <select id="assign-select" style="padding-right:14px"><option value="">– Wählen –</option></select>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('modal-assign')">Abbrechen</button>
-      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="assignVorlage()">Zuweisen &#10003;</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="assignVorlage()">Zuweisen ✓</button>
     </div>
   </div>
 </div>
@@ -275,15 +294,15 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 <!-- NOTIZ MODAL -->
 <div class="overlay" id="modal-notiz" onclick="closeModal('modal-notiz',event)">
   <div class="modal">
-    <div class="modal-title">&#128221; Tagesnotiz</div>
+    <div class="modal-title">📝 Tagesnotiz</div>
     <div class="ig" style="margin-bottom:10px">
       <label>Energie</label>
       <div class="energy-stars" id="energy-stars-modal">
-        <span class="energy-star" onclick="setEnergy(1)">&#9889;</span>
-        <span class="energy-star" onclick="setEnergy(2)">&#9889;</span>
-        <span class="energy-star" onclick="setEnergy(3)">&#9889;</span>
-        <span class="energy-star" onclick="setEnergy(4)">&#9889;</span>
-        <span class="energy-star" onclick="setEnergy(5)">&#9889;</span>
+        <span class="energy-star" onclick="setEnergy(1)">⚡</span>
+        <span class="energy-star" onclick="setEnergy(2)">⚡</span>
+        <span class="energy-star" onclick="setEnergy(3)">⚡</span>
+        <span class="energy-star" onclick="setEnergy(4)">⚡</span>
+        <span class="energy-star" onclick="setEnergy(5)">⚡</span>
       </div>
     </div>
     <div class="modal-grid">
@@ -297,10 +316,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
         </select>
       </div>
     </div>
-    <div class="ig full" style="margin-bottom:12px"><label>Besonderheiten / Notizen</label><textarea id="notiz-text" placeholder="z.B. Bund 71, sehr m&#252;de..."></textarea></div>
+    <div class="ig full" style="margin-bottom:12px"><label>Besonderheiten / Notizen</label><textarea id="notiz-text" placeholder="z.B. Bund 71, sehr müde..."></textarea></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('modal-notiz')">Abbrechen</button>
-      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveNotiz()">Speichern &#10003;</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveNotiz()">Speichern ✓</button>
     </div>
   </div>
 </div>
@@ -309,17 +328,21 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 <div class="overlay" id="modal-vorlage" onclick="closeModal('modal-vorlage',event)">
   <div class="modal">
     <div class="modal-title" id="vorlage-modal-title">Neue Vorlage</div>
-    <div class="ig full" style="margin-bottom:10px"><label>Name</label><input type="text" id="vname" placeholder="z.B. Gym A &#8211; Unterk&#246;rper"></div>
+    <div class="ig full" style="margin-bottom:10px"><label>Name</label><input type="text" id="vname" placeholder="z.B. Gym A – Unterkörper"></div>
+    <div class="ig full" style="margin-bottom:10px">
+      <label>Symbol</label>
+      <div id="symbol-picker" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+    </div>
     <div class="ig full" style="margin-bottom:14px">
       <label>Farbe</label>
       <div class="color-picker" id="color-picker"></div>
     </div>
-    <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text2);margin-bottom:8px">&#220;bungen in dieser Vorlage</div>
+    <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text2);margin-bottom:8px">Übungen in dieser Vorlage</div>
     <div id="vorlage-ex-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
-    <button class="btn-add-new" style="margin-bottom:12px" onclick="openAddVorlageExModal()">+ &#220;bung hinzuf&#252;gen</button>
+    <button class="btn-add-new" style="margin-bottom:12px" onclick="openAddVorlageExModal()">+ Übung hinzufügen</button>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('modal-vorlage')">Abbrechen</button>
-      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveVorlage()">Speichern &#10003;</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveVorlage()">Speichern ✓</button>
     </div>
   </div>
 </div>
@@ -327,18 +350,18 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 <!-- ADD VORLAGE EXERCISE MODAL -->
 <div class="overlay" id="modal-vadd" onclick="closeModal('modal-vadd',event)">
   <div class="modal">
-    <div class="modal-title">&#220;bung zur Vorlage</div>
-    <div class="ig full" style="margin-bottom:10px"><label>&#220;bungsname</label><input type="text" id="vex-name" placeholder="z.B. Bankdr&#252;cken"></div>
+    <div class="modal-title">Übung zur Vorlage</div>
+    <div class="ig full" style="margin-bottom:10px"><label>Übungsname</label><input type="text" id="vex-name" placeholder="z.B. Bankdrücken"></div>
     <div class="mode-tabs">
-      <button class="mode-tab active" id="vtab-kraft" onclick="switchExType('kraft')">&#127947; Kraft</button>
-      <button class="mode-tab" id="vtab-cardio" onclick="switchExType('cardio')">&#127939; Cardio</button>
-      <button class="mode-tab" id="vtab-carry" onclick="switchExType('carry')">&#128119; Carry</button>
-      <button class="mode-tab" id="vtab-frei" onclick="switchExType('frei')">&#128221; Frei</button>
+      <button class="mode-tab active" id="vtab-kraft" onclick="switchExType('kraft')">🏋 Kraft</button>
+      <button class="mode-tab" id="vtab-cardio" onclick="switchExType('cardio')">🏃 Cardio</button>
+      <button class="mode-tab" id="vtab-carry" onclick="switchExType('carry')">👷 Carry</button>
+      <button class="mode-tab" id="vtab-frei" onclick="switchExType('frei')">📝 Frei</button>
     </div>
     <!-- KRAFT -->
     <div id="vex-kraft">
       <div class="modal-grid">
-        <div class="ig"><label>Ziel-S&#228;tze</label><div class="iu"><input type="number" id="vex-sets" placeholder="3"><span class="unit">St.</span></div></div>
+        <div class="ig"><label>Ziel-Sätze</label><div class="iu"><input type="number" id="vex-sets" placeholder="3"><span class="unit">St.</span></div></div>
         <div class="ig"><label>Ziel-Wdh.</label><div class="iu"><input type="number" id="vex-reps" placeholder="10"><span class="unit">Wdh</span></div></div>
         <div class="ig full"><label>Ziel-Gewicht</label><div class="iu"><input type="number" id="vex-weight" placeholder="0" step="0.5"><span class="unit">kg</span></div></div>
       </div>
@@ -366,7 +389,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('modal-vadd')">Abbrechen</button>
-      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="addVorlageEx()">Hinzuf&#252;gen &#10003;</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="addVorlageEx()">Hinzufügen ✓</button>
     </div>
   </div>
 </div>
@@ -401,7 +424,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('modal-set')">Abbrechen</button>
-      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveSet()">Speichern &#10003;</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveSet()">Speichern ✓</button>
     </div>
   </div>
 </div>
@@ -411,16 +434,17 @@ const SB_URL='https://iojktoupfrfembgwclqe.supabase.co';
 const SB_KEY='sb_publishable_h8TqNTprJJV-iF5A5d-LpA_bwGaZjBK';
 let UID=localStorage.getItem('tt2_uid')||'';
 
-const COLORS=['#c8773a','#e8a87c','#d4827a','#f0b060','#a78bfa','#34d399','#818cf8','#fb923c','#f9a8d4','#38bdf8'];
+const SYMBOLS=['\u{1F3CB}','\u2694\uFE0F','\u{1F5E1}','\u{1F9D8}','\u{1F3C3}','\u{1F6B4}','\u{1F938}','\u{1F4AA}','\u{1F94A}','\u{1F9D7}','\u{1F3CA}','\u{1F525}','\u26A1','\u{1F31D}','\u{1F4AB}','\u2728','\u{1F3AF}','\u{1F996}'];
+const COLORS=['#e8853a','#f0c070','#e88878','#a78bfa','#34d399','#818cf8','#fb923c','#f9a8d4','#38bdf8','#a3e635'];
 const MONTHS_DE=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const DAYS_FULL=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
 const MONTHS_SH=['Jan','Feb','M\u00e4r','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-const EX_TYPES={kraft:'&#127947; Kraft',cardio:'&#127939; Cardio',carry:'&#128119; Carry',frei:'&#128221; Frei'};
+const EX_TYPES={kraft:'🏋 Kraft',cardio:'🏃 Cardio',carry:'👷 Carry',frei:'📝 Frei'};
 
 let calViewYear,calViewMonth,selectedDateKey=todayKey();
 let vorlagen=[],dayCache={};
 let activeExIdx=null,activeExType='kraft',selectedColor=COLORS[0];
-let vorlageExercises=[],currentEnergy=0,editingVorlageId=null;
+let vorlageExercises=[],currentEnergy=0,editingVorlageId=null,selectedSymbol='🏋️';
 
 function todayKey(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function dateFromKey(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m,d);}
@@ -480,21 +504,21 @@ async function loadVorlagen(){
   try{vorlagen=await sb(`/rest/v1/tt2_vorlagen?user_id=eq.${UID}&order=name`)||[];}catch(e){vorlagen=[];}
   renderVorlageList();
   const sel=document.getElementById('assign-select');
-  sel.innerHTML='<option value="">&#8211; W\u00e4hlen &#8211;</option>';
+  sel.innerHTML='<option value="">– W\u00e4hlen –</option>';
   vorlagen.forEach(v=>sel.add(new Option(v.name,v.id)));
 }
 
 function renderVorlageList(){
   const c=document.getElementById('vorlage-list');
-  if(!vorlagen.length){c.innerHTML='<div class="empty-hint">Noch keine Vorlagen. Lege eine an!</div>';return;}
+  if(!vorlagen.length){c.innerHTML='<div class="empty-hint">Dein Grimoire ist leer. Lege eine Vorlage an!</div>';return;}
   c.innerHTML=vorlagen.map(v=>`
     <div class="vorlage-item">
       <div class="vorlage-header">
-        <div class="vorlage-color" style="background:${v.color}"></div>
+        <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:${v.color}22;border:1px solid ${v.color}44;flex-shrink:0">${v.symbol||'🏋️'}</div>
         <div class="vorlage-name">${v.name}</div>
         <div class="vorlage-actions">
-          <button class="v-btn" onclick="editVorlage('${v.id}')">&#9999;&#65039;</button>
-          <button class="v-btn del" onclick="deleteVorlage('${v.id}')">&#10005;</button>
+          <button class="v-btn" onclick="editVorlage('${v.id}')">✏️</button>
+          <button class="v-btn del" onclick="deleteVorlage('${v.id}')">✕</button>
         </div>
       </div>
       <div class="vorlage-exercises">
@@ -503,7 +527,7 @@ function renderVorlageList(){
             <span class="ve-name">${ex.name}</span>
             <span class="ve-detail">${formatExGoal(ex)}</span>
           </div>`).join('')}
-        ${!(v.exercises||[]).length?'<div style="font-size:0.75rem;color:var(--text3);padding:4px 0">Keine &#220;bungen</div>':''}
+        ${!(v.exercises||[]).length?'<div style="font-size:0.75rem;color:var(--text3);padding:4px 0">Keine Übungen</div>':''}
       </div>
     </div>`).join('');
 }
@@ -520,6 +544,7 @@ function openVorlageModal(prefill){
   document.getElementById('vorlage-modal-title').textContent=prefill?'Vorlage bearbeiten':'Neue Vorlage';
   document.getElementById('vname').value=prefill?prefill.name:'';
   selectedColor=prefill?prefill.color:COLORS[0];
+  selectedSymbol=prefill?prefill.symbol:'🏋️';
   vorlageExercises=prefill?(JSON.parse(JSON.stringify(prefill.exercises||[]))):[];
   renderColorPicker();renderVorlageExList();
   document.getElementById('modal-vorlage').classList.add('open');
@@ -535,7 +560,7 @@ function renderVorlageExList(){
         <div style="font-size:0.85rem;font-weight:700">${ex.name}</div>
         <div style="font-size:0.72rem;color:var(--text3)">${EX_TYPES[ex.type]||''} &middot; ${formatExGoal(ex)}</div>
       </div>
-      <button class="del-btn" onclick="removeVorlageEx(${i})">&#10005;</button>
+      <button class="del-btn" onclick="removeVorlageEx(${i})">✕</button>
     </div>`).join('');
 }
 function removeVorlageEx(i){vorlageExercises.splice(i,1);renderVorlageExList();}
@@ -543,7 +568,7 @@ function removeVorlageEx(i){vorlageExercises.splice(i,1);renderVorlageExList();}
 async function saveVorlage(){
   const name=document.getElementById('vname').value.trim();
   if(!name){document.getElementById('vname').focus();return;}
-  const row={user_id:UID,name,color:selectedColor,exercises:vorlageExercises};
+  const row={user_id:UID,name,color:selectedColor,symbol:selectedSymbol,exercises:vorlageExercises};
   try{
     if(editingVorlageId){
       await sb(`/rest/v1/tt2_vorlagen?id=eq.${editingVorlageId}`,'PATCH',row);
@@ -555,7 +580,7 @@ async function saveVorlage(){
     }
     renderVorlageList();
     const sel=document.getElementById('assign-select');
-    sel.innerHTML='<option value="">&#8211; W\u00e4hlen &#8211;</option>';
+    sel.innerHTML='<option value="">– W\u00e4hlen –</option>';
     vorlagen.forEach(v=>sel.add(new Option(v.name,v.id)));
     closeModal('modal-vorlage');
   }catch(e){alert('Fehler: '+e.message);}
@@ -598,8 +623,10 @@ function addVorlageEx(){
 // COLOR PICKER
 function renderColorPicker(){
   document.getElementById('color-picker').innerHTML=COLORS.map(c=>`<div class="color-opt ${c===selectedColor?'selected':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
+  document.getElementById('symbol-picker').innerHTML=SYMBOLS.map(s=>`<div onclick="pickSymbol('${s}')" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;background:${s===selectedSymbol?'var(--accent-dim)':'var(--bg)'};border:2px solid ${s===selectedSymbol?'var(--accent)':'var(--border)'};transition:all 0.15s">${s}</div>`).join('');
 }
 function pickColor(c){selectedColor=c;renderColorPicker();}
+function pickSymbol(s){selectedSymbol=s;renderColorPicker();}
 
 // CALENDAR
 function calMonth(delta){calViewMonth+=delta;if(calViewMonth<0){calViewMonth=11;calViewYear--;}if(calViewMonth>11){calViewMonth=0;calViewYear++;}renderCal();}
@@ -615,8 +642,11 @@ function renderCal(){
     let cls='cal-day';
     if(key===today)cls+=' today';
     if(key===selectedDateKey)cls+=' selected';
-    if(dd){if(dd.is_pause)cls+=' has-pause';else if(dd.vorlage_id)cls+=' has-training';}
-    const dot=dd?'<div class="day-dot"></div>':'';
+    let dot='';
+    if(dd){
+      if(dd.is_pause){cls+=' has-pause';dot='<div style="font-size:0.6rem;line-height:1;margin-top:1px">\uD83D\uDE34</div>';}
+      else if(dd.vorlage_id){cls+=' has-training';const v=vorlagen.find(x=>x.id===dd.vorlage_id);dot=`<div style="font-size:0.6rem;line-height:1;margin-top:1px">${v&&v.symbol?v.symbol:'\uD83D\uDCAA'}</div>`;}
+    }
     html+=`<div class="${cls}" onclick="selectDay('${key}')">${d}${dot}</div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
@@ -666,12 +696,12 @@ function renderDayDetail(dd){
     const v=vorlagen.find(x=>x.id===dd.vorlage_id);
     if(v){
       document.getElementById('day-type-name').textContent=v.name;
-      document.getElementById('day-type-sub').innerHTML=`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${v.color};margin-right:5px"></span>Vorlage`;
+      document.getElementById('day-type-sub').innerHTML=`<span style="font-size:1rem;margin-right:5px">${v.symbol||'🏋️'}</span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${v.color};margin-right:4px;vertical-align:middle"></span>Vorlage`;
     }
     renderExercises(dd.exercises||[],dd.vorlage_id);
   }else{
     document.getElementById('day-type-name').textContent='Kein Training geplant';
-    document.getElementById('day-type-sub').textContent='Vorlage zuweisen oder &#220;bung hinzuf&#252;gen';
+    document.getElementById('day-type-sub').textContent='Vorlage zuweisen oder Übung hinzufügen';
     renderExercises(dd?dd.exercises||[]:[],null);
   }
   renderNotizPreview(dd);
@@ -680,7 +710,7 @@ function renderDayDetail(dd){
 function renderNotizPreview(dd){
   const prev=document.getElementById('notiz-preview');
   if(!dd||(!dd.notiz_energie&&!dd.notiz_zyklus&&!dd.notiz_kater&&!dd.notiz_text)){prev.style.display='none';return;}
-  const energie=dd.notiz_energie?'&#9889;'.repeat(dd.notiz_energie):'';
+  const energie=dd.notiz_energie?'⚡'.repeat(dd.notiz_energie):'';
   prev.style.display='block';
   prev.innerHTML=`<div class="notiz-card">
     ${energie?`<div class="notiz-row"><span class="notiz-label">Energie</span><span>${energie}</span></div>`:''}
@@ -707,7 +737,7 @@ function renderExercises(exercises,vorlageId){
 
   const c=document.getElementById('exercise-container');
   if(!allEx.length){
-    c.innerHTML=`<div class="empty-hint">Keine &#220;bungen.</div><button class="add-exercise-btn" onclick="openFreeExModal()">+ &#220;bung hinzuf&#252;gen</button>`;
+    c.innerHTML=`<div class="empty-hint">Keine Übungen.</div><button class="add-exercise-btn" onclick="openFreeExModal()">+ Übung hinzufügen</button>`;
     return;
   }
   c.innerHTML=`<div class="exercise-list">${allEx.map((ex,i)=>{
@@ -719,7 +749,7 @@ function renderExercises(exercises,vorlageId){
           <div class="exercise-name">${ex.name}</div>
           <div class="exercise-type">${EX_TYPES[ex.type]||''} ${goal?'&middot; Ziel: '+goal:''}</div>
         </div>
-        <button class="del-btn" onclick="deleteExercise('${ex.name}')">&#10005;</button>
+        <button class="del-btn" onclick="deleteExercise('${ex.name}')">✕</button>
       </div>
       <div class="sets-row">
         ${sets.map((s,si)=>`<div class="set-badge" onclick="deleteSet('${ex.name}',${si})" title="Klicken zum L\u00f6schen">${formatSet(s,ex.type)}</div>`).join('')}
@@ -727,14 +757,14 @@ function renderExercises(exercises,vorlageId){
       </div>
     </div>`;
   }).join('')}</div>
-  <button class="add-exercise-btn" onclick="openFreeExModal()">+ Weitere &#220;bung</button>`;
+  <button class="add-exercise-btn" onclick="openFreeExModal()">+ Weitere Übung</button>`;
 }
 
 function formatSet(s,type){
   if(type==='kraft')return`<b>${s.reps}</b>x${s.weight}kg`;
   if(type==='cardio')return`${s.time||'?'} | ${s.dist||0}km | ${s.incline||0}%`;
   if(type==='carry')return`${s.cweight||0}kg | ${s.cdist||0}m | ${s.ctime||'?'}`;
-  return s.note||'&#10003;';
+  return s.note||'✓';
 }
 
 // ASSIGN
