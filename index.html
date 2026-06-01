@@ -241,6 +241,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
               <button class="day-action-btn" onclick="openAssignModal()">📋 Vorlage</button>
               <button class="day-action-btn" id="pause-btn" onclick="togglePause()">☕ Pause</button>
               <button class="day-action-btn" onclick="openNotizModal()">📝 Notiz</button>
+              <button class="day-action-btn" id="summary-btn" onclick="toggleSummary()">📊 Auswertung</button>
             </div>
           </div>
           <!-- NOTIZ PREVIEW -->
@@ -939,13 +940,88 @@ async function deleteSet(exName,setIdx){
   await saveDay(selectedDateKey,existing);renderExercises(existing.exercises,existing.vorlage_id);
 }
 
-let editSetExName='',editSetIdx=-1,editSetType='kraft';
-function openEditSetModal(exName,setIdx,exType){
-  editSetExName=exName;editSetIdx=setIdx;editSetType=exType||'kraft';
+let summaryMode=false;
+function toggleSummary(){
+  summaryMode=!summaryMode;
+  const btn=document.getElementById('summary-btn');
+  btn.classList.toggle('active',summaryMode);
   const dd=dayCache[selectedDateKey];
+  if(summaryMode){
+    renderSummary(dd);
+  }else{
+    renderExercises(dd?dd.exercises||[]:[],dd?dd.vorlage_id:null);
+  }
+}
+function renderSummary(dd){
+  const c=document.getElementById('exercise-container');
+  const exercises=dd?dd.exercises||[]:[];
+  if(!exercises.length){c.innerHTML='<div class="empty-hint">Keine Daten zum Auswerten.</div>';return;}
+  let html='<div class="exercise-list">';
+  exercises.forEach(ex=>{
+    const sets=ex.sets||[];
+    if(!sets.length){html+=`<div class="exercise-item"><div class="exercise-header"><div class="exercise-name">${ex.name}</div></div><div style="font-size:0.75rem;color:var(--text3)">Keine S\u00e4tze eingetragen</div></div>`;return;}
+    let summary='';
+    if(ex.type==='kraft'||!ex.type){
+      const totalVol=sets.reduce((s,x)=>(s+(x.reps||0)*(x.weight||0)),0);
+      const bestWeight=Math.max(...sets.map(s=>s.weight||0));
+      const totalReps=sets.reduce((s,x)=>s+(x.reps||0),0);
+      summary=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${sets.length}</div>
+          <div style="font-size:0.65rem;color:var(--text3)">S\u00c4TZE</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${bestWeight}kg</div>
+          <div style="font-size:0.65rem;color:var(--text3)">MAX</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${totalVol}kg</div>
+          <div style="font-size:0.65rem;color:var(--text3)">VOLUMEN</div>
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:0.75rem;color:var(--text2)">${sets.map((s,i)=>`S${i+1}: ${s.reps}\u00d7${s.weight}kg`).join(' \u00b7 ')}</div>`;
+    }else if(ex.type==='cardio'){
+      const best=sets[sets.length-1];
+      summary=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.time||'?'}</div>
+          <div style="font-size:0.65rem;color:var(--text3)">ZEIT</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.dist||0}km</div>
+          <div style="font-size:0.65rem;color:var(--text3)">DISTANZ</div>
+        </div>
+      </div>`;
+    }else if(ex.type==='carry'){
+      const best=sets[sets.length-1];
+      summary=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.cweight||0}kg</div>
+          <div style="font-size:0.65rem;color:var(--text3)">GEWICHT</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.cdist||0}m</div>
+          <div style="font-size:0.65rem;color:var(--text3)">DISTANZ</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.ctime||'?'}</div>
+          <div style="font-size:0.65rem;color:var(--text3)">ZEIT</div>
+        </div>
+      </div>`;
+    }else{
+      summary=`<div style="margin-top:6px;font-size:0.82rem;color:var(--text2)">${sets.map(s=>s.note).join(' | ')}</div>`;
+    }
+    html+=`<div class="exercise-item"><div class="exercise-header"><div class="exercise-name">${ex.name}</div><div class="exercise-type">${EX_TYPES[ex.type]||''}</div></div>${summary}</div>`;
+  });
+  html+='</div>';
+  c.innerHTML=html;
+}
+async function openEditSetModal(exName,setIdx,exType){
+  editSetExName=exName;editSetIdx=setIdx;editSetType=exType||'kraft';
+  // Always load fresh from cache or DB
+  const dd=await loadDay(selectedDateKey);
   const ex=dd&&dd.exercises&&dd.exercises.find(e=>e.name===exName);
   const set=ex&&ex.sets&&ex.sets[setIdx];
-  // Reuse set modal but pre-fill
   activeExName=exName;activeSetType=exType||'kraft';
   document.getElementById('set-modal-title').textContent=exName+' \u2014 Bearbeiten';
   ['kraft','cardio','carry','frei'].forEach(t=>{const el=document.getElementById('set-fields-'+t);if(el)el.style.display=t===activeSetType?'block':'none';});
@@ -955,19 +1031,21 @@ function openEditSetModal(exName,setIdx,exType){
     else if(exType==='carry'){document.getElementById('set-cweight').value=set.cweight||'';document.getElementById('set-cdist').value=set.cdist||'';document.getElementById('set-ctime').value=set.ctime||'';document.getElementById('set-cspeed').value=set.cspeed||'';}
     else{document.getElementById('set-note').value=set.note||'';}
   }
-  // Change save to update
   document.querySelector('#modal-set .btn-go').textContent='Aktualisieren \u2713';
   document.querySelector('#modal-set .btn-go').onclick=updateSet;
-  // Add delete button
   const actions=document.querySelector('#modal-set .modal-actions');
   if(!document.getElementById('set-delete-btn')){
     const delBtn=document.createElement('button');
-    delBtn.id='set-delete-btn';
-    delBtn.className='btn-cancel';
-    delBtn.style.color='var(--red)';
-    delBtn.style.borderColor='var(--red)';
+    delBtn.id='set-delete-btn';delBtn.className='btn-cancel';
+    delBtn.style.color='var(--red)';delBtn.style.borderColor='var(--red)';
     delBtn.textContent='L\u00f6schen';
-    delBtn.onclick=()=>{deleteSet(editSetExName,editSetIdx);closeModal('modal-set');document.querySelector('#modal-set .btn-go').textContent='Speichern \u2713';document.querySelector('#modal-set .btn-go').onclick=saveSet;document.getElementById('set-delete-btn').remove();};
+    delBtn.onclick=async()=>{
+      await deleteSet(editSetExName,editSetIdx);
+      closeModal('modal-set');
+      document.querySelector('#modal-set .btn-go').textContent='Speichern \u2713';
+      document.querySelector('#modal-set .btn-go').onclick=saveSet;
+      const b=document.getElementById('set-delete-btn');if(b)b.remove();
+    };
     actions.insertBefore(delBtn,actions.firstChild);
   }
   document.getElementById('modal-set').classList.add('open');
