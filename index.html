@@ -843,9 +843,33 @@ async function assignVorlage(){
 // PAUSE
 async function togglePause(){
   const existing=await loadDay(selectedDateKey)||{};
-  const isPause=!existing.is_pause;
-  const data={...existing,is_pause:isPause,vorlage_id:isPause?null:(existing.vorlage_id||null)};
-  await saveDay(selectedDateKey,data);renderDayDetail(isPause?{...data,is_pause:true}:data);
+  const isPause=existing.is_pause===true?false:true;
+  const data={
+    user_id:UID,
+    date_key:selectedDateKey,
+    is_pause:isPause,
+    vorlage_id:isPause?null:(existing.vorlage_id||null),
+    exercises:existing.exercises||[],
+    notiz_energie:existing.notiz_energie||null,
+    notiz_zyklus:existing.notiz_zyklus||null,
+    notiz_kater:existing.notiz_kater||null,
+    notiz_text:existing.notiz_text||null,
+    updated_at:new Date().toISOString()
+  };
+  // Delete existing and reinsert to avoid merge issues
+  delete dayCache[selectedDateKey];
+  setSS('syncing','Speichern...');
+  try{
+    await fetch(SB_URL+'/rest/v1/tt2_days?on_conflict=user_id,date_key',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(data)
+    });
+    dayCache[selectedDateKey]=data;
+    setSS('synced','Gespeichert');
+    renderCal();
+    renderDayDetail(data);
+  }catch(e){setSS('error','Fehler: '+e.message);}
 }
 
 // NOTIZ
