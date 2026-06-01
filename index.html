@@ -499,7 +499,17 @@ async function init(){
     document.getElementById('hdr-date').textContent=d.getDate()+'. '+MONTHS_SH[d.getMonth()]+' '+d.getFullYear();
     await loadMonthDays(calViewYear,calViewMonth);
     renderCal();selectDay(todayKey());renderStats();
-  }catch(e){setSS('error','Fehler: '+e.message.substring(0,40));}
+  }catch(e){
+    const msg=e.message||'';
+    if(msg.includes('does not exist')||msg.includes('relation')){
+      setSS('error','Tabellen fehlen – SQL ausführen!');
+    }else if(msg.includes('401')||msg.includes('403')){
+      setSS('error','Verbindungsfehler');
+    }else{
+      setSS('error','Fehler: '+msg.substring(0,40));
+    }
+    console.error('Init error:', e);
+  }
 }
 
 // VORLAGEN
@@ -733,6 +743,7 @@ async function loadMonthDays(year,month){
     rows.forEach(r=>{dayCache[r.date_key]=r;});
   }catch(e){console.warn('Month load error',e);}
 }
+async function loadDay(key){
   if(dayCache[key])return dayCache[key];
   try{
     const rows=await sb(`/rest/v1/tt2_days?user_id=eq.${UID}&date_key=eq.${key}`);
