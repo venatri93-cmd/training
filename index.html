@@ -242,6 +242,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
               <button class="day-action-btn" id="pause-btn" onclick="togglePause()">☕ Pause</button>
               <button class="day-action-btn" onclick="openNotizModal()">📝 Notiz</button>
               <button class="day-action-btn" id="summary-btn" onclick="toggleSummary()">📊 Auswertung</button>
+              <button class="day-action-btn" id="finish-btn" onclick="toggleFinished()" style="color:var(--accent)">🔥 Abschließen</button>
             </div>
           </div>
           <!-- NOTIZ PREVIEW -->
@@ -396,6 +397,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
+<!-- EXERCISE NOTE MODAL -->
+<div class="overlay" id="modal-exnote" onclick="closeModal('modal-exnote',event)">
+  <div class="modal">
+    <div class="modal-title" id="exnote-title">📝 Übungsnotiz</div>
+    <div class="ig full" style="margin-bottom:12px">
+      <label>Notiz / Merkhilfe</label>
+      <textarea id="exnote-text" placeholder="z.B. Gewicht am Rücken, langsam runter, Knie nicht über Zehen..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-exnote')">Abbrechen</button>
+      <button class="btn-go" style="flex:2;border-radius:14px;padding:13px" onclick="saveExNote()">Speichern ✓</button>
+    </div>
+  </div>
+</div>
+
 <!-- SET MODAL (for day tracking) -->
 <div class="overlay" id="modal-set" onclick="closeModal('modal-set',event)">
   <div class="modal">
@@ -436,7 +452,7 @@ const SB_URL='https://iojktoupfrfembgwclqe.supabase.co';
 const SB_KEY='sb_publishable_h8TqNTprJJV-iF5A5d-LpA_bwGaZjBK';
 let UID=localStorage.getItem('tt2_uid')||'';
 
-const SYMBOLS=['\u{1F3CB}','\u2694\uFE0F','\u{1F5E1}','\u{1F9D8}','\u{1F3C3}','\u{1F6B4}','\u{1F938}','\u{1F4AA}','\u{1F94A}','\u{1F9D7}','\u{1F3CA}','\u{1F525}','\u26A1','\u{1F31D}','\u{1F4AB}','\u2728','\u{1F3AF}','\u{1F996}'];
+const SYMBOLS=['\u{1F3CB}\uFE0F\u200D\u2640\uFE0F','\uD83D\uDC5F','\u{1F9D8}\u200D\u2640\uFE0F','\u{1F938}\u200D\u2640\uFE0F','\uD83D\uDCAA','\u{1F94A}','\uD83D\uDEE1\uFE0F','\u2694\uFE0F','\uD83D\uDDE1\uFE0F','\uD83C\uDFF9','\uD83E\uDDB5','\uD83D\uDD25','\u26A1','\uD83C\uDF19','\uD83D\uDCAB','\u2728','\uD83C\uDF3F','\uD83D\uDD2E'];
 const COLORS=['#e8853a','#f0c070','#e88878','#a78bfa','#34d399','#818cf8','#fb923c','#f9a8d4','#38bdf8','#a3e635'];
 const MONTHS_DE=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const DAYS_FULL=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
@@ -717,6 +733,7 @@ function renderCal(){
     let dot='';
     if(dd){
       if(dd.is_pause){cls+=' has-pause';dot='<div style="font-size:0.6rem;line-height:1;margin-top:1px">\uD83D\uDE34</div>';}
+      else if(dd.is_finished){cls+=' has-training';dot='<div style="font-size:0.6rem;line-height:1;margin-top:1px">\uD83D\uDD25</div>';}
       else if(dd.vorlage_id){cls+=' has-training';const v=vorlagen.find(x=>x.id===dd.vorlage_id);dot=`<div style="font-size:0.6rem;line-height:1;margin-top:1px">${v&&v.symbol?v.symbol:'\uD83D\uDCAA'}</div>`;}
     }
     html+=`<div class="${cls}" onclick="selectDay('${key}')">${d}${dot}</div>`;
@@ -766,6 +783,12 @@ async function saveDay(key,data){
 
 function renderDayDetail(dd){
   const pauseBtn=document.getElementById('pause-btn');
+  const finishBtn=document.getElementById('finish-btn');
+  summaryMode=dd&&dd.is_finished||false;
+  if(finishBtn){
+    finishBtn.textContent=dd&&dd.is_finished?'\uD83D\uDD25 Abgefackelt!':'🔥 Abschließen';
+    finishBtn.classList.toggle('active',dd&&dd.is_finished);
+  }
   if(dd&&dd.is_pause){
     document.getElementById('day-type-name').textContent='\uD83C\uDFE0 Pausentag';
     document.getElementById('day-type-sub').textContent='Erhol dich gut! \uD83D\uDE0A';
@@ -778,13 +801,17 @@ function renderDayDetail(dd){
     const v=vorlagen.find(x=>x.id===dd.vorlage_id);
     if(v){
       document.getElementById('day-type-name').textContent=v.name;
-      document.getElementById('day-type-sub').innerHTML=`<span style="font-size:1rem;margin-right:5px">${v.symbol||'🏋️'}</span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${v.color};margin-right:4px;vertical-align:middle"></span>Vorlage`;
+      document.getElementById('day-type-sub').innerHTML=`<span style="font-size:1rem;margin-right:5px">${v.symbol||'🏋️'}</span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${v.color};margin-right:4px;vertical-align:middle"></span>${dd&&dd.is_finished?'Abgeschlossen':'Vorlage'}`;
     }
-    renderExercises(dd.exercises||[],dd.vorlage_id);
   }else{
     document.getElementById('day-type-name').textContent='Kein Training geplant';
     document.getElementById('day-type-sub').textContent='Vorlage zuweisen oder Übung hinzufügen';
-    renderExercises(dd?dd.exercises||[]:[],null);
+  }
+  // Auto-switch to summary if finished, edit mode otherwise
+  if(dd&&dd.is_finished){
+    renderSummary(dd);
+  }else{
+    renderExercises(dd?dd.exercises||[]:[],dd?dd.vorlage_id:null);
   }
   renderNotizPreview(dd);
 }
@@ -831,317 +858,4 @@ function renderExercises(exercises,vorlageId){
           <div class="exercise-name">${ex.name}</div>
           <div class="exercise-type">${EX_TYPES[ex.type]||''} ${goal?'&middot; Ziel: '+goal:''}</div>
         </div>
-        <button class="del-btn" onclick="deleteExercise('${ex.name}')">✕</button>
-      </div>
-      <div class="sets-row">
-        ${sets.map((s,si)=>`<div class="set-badge" onclick="openEditSetModal('${ex.name}',${si},'${ex.type}')" title="Tippen zum Bearbeiten">${formatSet(s,ex.type)}</div>`).join('')}
-        <button class="add-set-btn" onclick="openSetModal('${ex.name}','${ex.type}')">+ Eintragen</button>
-      </div>
-    </div>`;
-  }).join('')}</div>
-  <button class="add-exercise-btn" onclick="openFreeExModal()">+ Weitere Übung</button>`;
-}
-
-function formatSet(s,type){
-  if(type==='kraft')return`<b>${s.reps}</b>x${s.weight}kg`;
-  if(type==='cardio')return`${s.time||'?'} | ${s.dist||0}km | ${s.incline||0}%`;
-  if(type==='carry')return`${s.cweight||0}kg | ${s.cdist||0}m | ${s.ctime||'?'}`;
-  return s.note||'✓';
-}
-
-// ASSIGN
-function openAssignModal(){document.getElementById('modal-assign').classList.add('open');}
-async function assignVorlage(){
-  const vid=document.getElementById('assign-select').value;
-  if(!vid){alert('Vorlage w\u00e4hlen.');return;}
-  const v=vorlagen.find(x=>x.id===vid);
-  const existing=await loadDay(selectedDateKey)||{};
-  const data={...existing,vorlage_id:vid,is_pause:false,exercises:existing.exercises||[]};
-  await saveDay(selectedDateKey,data);
-  closeModal('modal-assign');renderDayDetail(data);
-}
-
-// PAUSE
-async function togglePause(){
-  const existing=await loadDay(selectedDateKey)||{};
-  const isPause=existing.is_pause===true?false:true;
-  const data={
-    user_id:UID,
-    date_key:selectedDateKey,
-    is_pause:isPause,
-    vorlage_id:isPause?null:(existing.vorlage_id||null),
-    exercises:existing.exercises||[],
-    notiz_energie:existing.notiz_energie||null,
-    notiz_zyklus:existing.notiz_zyklus||null,
-    notiz_kater:existing.notiz_kater||null,
-    notiz_text:existing.notiz_text||null,
-    updated_at:new Date().toISOString()
-  };
-  // Delete existing and reinsert to avoid merge issues
-  delete dayCache[selectedDateKey];
-  setSS('syncing','Speichern...');
-  try{
-    await fetch(SB_URL+'/rest/v1/tt2_days?on_conflict=user_id,date_key',{
-      method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
-      body:JSON.stringify(data)
-    });
-    dayCache[selectedDateKey]=data;
-    setSS('synced','Gespeichert');
-    renderCal();
-    renderDayDetail(data);
-  }catch(e){setSS('error','Fehler: '+e.message);}
-}
-
-// NOTIZ
-function openNotizModal(){
-  const dd=dayCache[selectedDateKey]||{};
-  currentEnergy=dd.notiz_energie||0;
-  document.getElementById('notiz-zyklus').value=dd.notiz_zyklus||'';
-  document.getElementById('notiz-kater').value=dd.notiz_kater||'';
-  document.getElementById('notiz-text').value=dd.notiz_text||'';
-  updateEnergyStars();
-  document.getElementById('modal-notiz').classList.add('open');
-}
-function setEnergy(n){currentEnergy=n;updateEnergyStars();}
-function updateEnergyStars(){
-  document.querySelectorAll('.energy-star').forEach((s,i)=>{s.classList.toggle('active',i<currentEnergy);});
-}
-async function saveNotiz(){
-  const existing=await loadDay(selectedDateKey)||{};
-  const data={...existing,notiz_energie:currentEnergy,notiz_zyklus:parseInt(document.getElementById('notiz-zyklus').value)||null,notiz_kater:document.getElementById('notiz-kater').value||null,notiz_text:document.getElementById('notiz-text').value||null};
-  await saveDay(selectedDateKey,data);closeModal('modal-notiz');renderNotizPreview(data);
-}
-
-// SETS
-let activeExName='',activeSetType='kraft';
-function openSetModal(exName,exType){
-  activeExName=exName;activeSetType=exType||'kraft';
-  document.getElementById('set-modal-title').textContent=exName+' \u2014 Eintragen';
-  ['kraft','cardio','carry','frei'].forEach(t=>{
-    const el=document.getElementById('set-fields-'+t);
-    if(el)el.style.display=t===activeSetType?'block':'none';
-  });
-  ['set-reps','set-weight','set-time','set-dist','set-incline','set-cweight','set-cdist','set-ctime','set-cspeed','set-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  // Pre-fill with template values
-  const v=dayCache[selectedDateKey]&&dayCache[selectedDateKey].vorlage_id?vorlagen.find(x=>x.id===dayCache[selectedDateKey].vorlage_id):null;
-  if(v){const vex=v.exercises&&v.exercises.find(e=>e.name===exName);if(vex){
-    if(vex.type==='kraft'){if(document.getElementById('set-reps'))document.getElementById('set-reps').value=vex.reps||'';if(document.getElementById('set-weight'))document.getElementById('set-weight').value=vex.weight||'';}
-    else if(vex.type==='cardio'){if(document.getElementById('set-time'))document.getElementById('set-time').value=vex.time||'';if(document.getElementById('set-dist'))document.getElementById('set-dist').value=vex.dist||'';if(document.getElementById('set-incline'))document.getElementById('set-incline').value=vex.incline||'';}
-    else if(vex.type==='carry'){if(document.getElementById('set-cweight'))document.getElementById('set-cweight').value=vex.cweight||'';if(document.getElementById('set-cdist'))document.getElementById('set-cdist').value=vex.cdist||'';if(document.getElementById('set-ctime'))document.getElementById('set-ctime').value=vex.ctime||'';if(document.getElementById('set-cspeed'))document.getElementById('set-cspeed').value=vex.cspeed||'';}
-  }}
-  document.getElementById('modal-set').classList.add('open');
-  setTimeout(()=>{const first=document.querySelector('#set-fields-'+activeSetType+' input');if(first)first.focus();},80);
-}
-async function saveSet(){
-  let set={};
-  if(activeSetType==='kraft'){set={reps:parseInt(document.getElementById('set-reps').value)||0,weight:parseFloat(document.getElementById('set-weight').value)||0};}
-  else if(activeSetType==='cardio'){set={time:document.getElementById('set-time').value||'',dist:parseFloat(document.getElementById('set-dist').value)||0,incline:parseFloat(document.getElementById('set-incline').value)||0};}
-  else if(activeSetType==='carry'){set={cweight:parseFloat(document.getElementById('set-cweight').value)||0,cdist:parseFloat(document.getElementById('set-cdist').value)||0,ctime:document.getElementById('set-ctime').value||'',cspeed:parseFloat(document.getElementById('set-cspeed').value)||0};}
-  else{set={note:document.getElementById('set-note').value||''};}
-  const existing=await loadDay(selectedDateKey)||{exercises:[]};
-  const exIdx=existing.exercises.findIndex(e=>e.name===activeExName);
-  if(exIdx>=0){existing.exercises[exIdx].sets=[...(existing.exercises[exIdx].sets||[]),set];}
-  else{existing.exercises.push({name:activeExName,type:activeSetType,sets:[set]});}
-  await saveDay(selectedDateKey,existing);closeModal('modal-set');
-  const v=existing.vorlage_id;renderExercises(existing.exercises,v);
-}
-
-// FREE EXERCISE
-function openFreeExModal(){
-  // Use vorlage add exercise inline
-  switchExType('kraft');
-  document.getElementById('vex-name').value='';
-  ['vex-sets','vex-reps','vex-weight'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('modal-vadd').classList.add('open');
-  // Override save button to add to day instead
-  document.querySelector('#modal-vadd .btn-go').onclick=addFreeExToDay;
-  setTimeout(()=>document.getElementById('vex-name').focus(),80);
-}
-async function addFreeExToDay(){
-  const name=document.getElementById('vex-name').value.trim();
-  if(!name){document.getElementById('vex-name').focus();return;}
-  let ex={name,type:currentExType,sets:[]};
-  const existing=await loadDay(selectedDateKey)||{exercises:[]};
-  if(!existing.exercises.find(e=>e.name===name)){
-    existing.exercises.push(ex);
-    await saveDay(selectedDateKey,existing);
-  }
-  closeModal('modal-vadd');
-  document.querySelector('#modal-vadd .btn-go').onclick=addVorlageEx;
-  renderExercises(existing.exercises,existing.vorlage_id);
-}
-
-async function deleteExercise(exName){
-  if(!confirm('\u00dcbung l\u00f6schen?'))return;
-  const existing=await loadDay(selectedDateKey)||{exercises:[]};
-  existing.exercises=existing.exercises.filter(e=>e.name!==exName);
-  await saveDay(selectedDateKey,existing);renderExercises(existing.exercises,existing.vorlage_id);
-}
-async function deleteSet(exName,setIdx){
-  const existing=await loadDay(selectedDateKey)||{exercises:[]};
-  const ex=existing.exercises.find(e=>e.name===exName);
-  if(ex){ex.sets.splice(setIdx,1);}
-  await saveDay(selectedDateKey,existing);renderExercises(existing.exercises,existing.vorlage_id);
-}
-
-let summaryMode=false;
-function toggleSummary(){
-  summaryMode=!summaryMode;
-  const btn=document.getElementById('summary-btn');
-  btn.classList.toggle('active',summaryMode);
-  const dd=dayCache[selectedDateKey];
-  if(summaryMode){
-    renderSummary(dd);
-  }else{
-    renderExercises(dd?dd.exercises||[]:[],dd?dd.vorlage_id:null);
-  }
-}
-function renderSummary(dd){
-  const c=document.getElementById('exercise-container');
-  const exercises=dd?dd.exercises||[]:[];
-  if(!exercises.length){c.innerHTML='<div class="empty-hint">Keine Daten zum Auswerten.</div>';return;}
-  let html='<div class="exercise-list">';
-  exercises.forEach(ex=>{
-    const sets=ex.sets||[];
-    if(!sets.length){html+=`<div class="exercise-item"><div class="exercise-header"><div class="exercise-name">${ex.name}</div></div><div style="font-size:0.75rem;color:var(--text3)">Keine S\u00e4tze eingetragen</div></div>`;return;}
-    let summary='';
-    if(ex.type==='kraft'||!ex.type){
-      const totalVol=sets.reduce((s,x)=>(s+(x.reps||0)*(x.weight||0)),0);
-      const bestWeight=Math.max(...sets.map(s=>s.weight||0));
-      const totalReps=sets.reduce((s,x)=>s+(x.reps||0),0);
-      summary=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${sets.length}</div>
-          <div style="font-size:0.65rem;color:var(--text3)">S\u00c4TZE</div>
-        </div>
-        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${bestWeight}kg</div>
-          <div style="font-size:0.65rem;color:var(--text3)">MAX</div>
-        </div>
-        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${totalVol}kg</div>
-          <div style="font-size:0.65rem;color:var(--text3)">VOLUMEN</div>
-        </div>
-      </div>
-      <div style="margin-top:6px;font-size:0.75rem;color:var(--text2)">${sets.map((s,i)=>`S${i+1}: ${s.reps}\u00d7${s.weight}kg`).join(' \u00b7 ')}</div>`;
-    }else if(ex.type==='cardio'){
-      const best=sets[sets.length-1];
-      summary=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.time||'?'}</div>
-          <div style="font-size:0.65rem;color:var(--text3)">ZEIT</div>
-        </div>
-        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.dist||0}km</div>
-          <div style="font-size:0.65rem;color:var(--text3)">DISTANZ</div>
-        </div>
-      </div>`;
-    }else if(ex.type==='carry'){
-      const best=sets[sets.length-1];
-      summary=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.cweight||0}kg</div>
-          <div style="font-size:0.65rem;color:var(--text3)">GEWICHT</div>
-        </div>
-        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.cdist||0}m</div>
-          <div style="font-size:0.65rem;color:var(--text3)">DISTANZ</div>
-        </div>
-        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${best.ctime||'?'}</div>
-          <div style="font-size:0.65rem;color:var(--text3)">ZEIT</div>
-        </div>
-      </div>`;
-    }else{
-      summary=`<div style="margin-top:6px;font-size:0.82rem;color:var(--text2)">${sets.map(s=>s.note).join(' | ')}</div>`;
-    }
-    html+=`<div class="exercise-item"><div class="exercise-header"><div class="exercise-name">${ex.name}</div><div class="exercise-type">${EX_TYPES[ex.type]||''}</div></div>${summary}</div>`;
-  });
-  html+='</div>';
-  c.innerHTML=html;
-}
-async function openEditSetModal(exName,setIdx,exType){
-  editSetExName=exName;editSetIdx=setIdx;editSetType=exType||'kraft';
-  // Always load fresh from cache or DB
-  const dd=await loadDay(selectedDateKey);
-  const ex=dd&&dd.exercises&&dd.exercises.find(e=>e.name===exName);
-  const set=ex&&ex.sets&&ex.sets[setIdx];
-  activeExName=exName;activeSetType=exType||'kraft';
-  document.getElementById('set-modal-title').textContent=exName+' \u2014 Bearbeiten';
-  ['kraft','cardio','carry','frei'].forEach(t=>{const el=document.getElementById('set-fields-'+t);if(el)el.style.display=t===activeSetType?'block':'none';});
-  if(set){
-    if(exType==='kraft'){document.getElementById('set-reps').value=set.reps||'';document.getElementById('set-weight').value=set.weight||'';}
-    else if(exType==='cardio'){document.getElementById('set-time').value=set.time||'';document.getElementById('set-dist').value=set.dist||'';document.getElementById('set-incline').value=set.incline||'';}
-    else if(exType==='carry'){document.getElementById('set-cweight').value=set.cweight||'';document.getElementById('set-cdist').value=set.cdist||'';document.getElementById('set-ctime').value=set.ctime||'';document.getElementById('set-cspeed').value=set.cspeed||'';}
-    else{document.getElementById('set-note').value=set.note||'';}
-  }
-  document.querySelector('#modal-set .btn-go').textContent='Aktualisieren \u2713';
-  document.querySelector('#modal-set .btn-go').onclick=updateSet;
-  const actions=document.querySelector('#modal-set .modal-actions');
-  if(!document.getElementById('set-delete-btn')){
-    const delBtn=document.createElement('button');
-    delBtn.id='set-delete-btn';delBtn.className='btn-cancel';
-    delBtn.style.color='var(--red)';delBtn.style.borderColor='var(--red)';
-    delBtn.textContent='L\u00f6schen';
-    delBtn.onclick=async()=>{
-      await deleteSet(editSetExName,editSetIdx);
-      closeModal('modal-set');
-      document.querySelector('#modal-set .btn-go').textContent='Speichern \u2713';
-      document.querySelector('#modal-set .btn-go').onclick=saveSet;
-      const b=document.getElementById('set-delete-btn');if(b)b.remove();
-    };
-    actions.insertBefore(delBtn,actions.firstChild);
-  }
-  document.getElementById('modal-set').classList.add('open');
-}
-async function updateSet(){
-  let set={};
-  if(activeSetType==='kraft'){set={reps:parseInt(document.getElementById('set-reps').value)||0,weight:parseFloat(document.getElementById('set-weight').value)||0};}
-  else if(activeSetType==='cardio'){set={time:document.getElementById('set-time').value||'',dist:parseFloat(document.getElementById('set-dist').value)||0,incline:parseFloat(document.getElementById('set-incline').value)||0};}
-  else if(activeSetType==='carry'){set={cweight:parseFloat(document.getElementById('set-cweight').value)||0,cdist:parseFloat(document.getElementById('set-cdist').value)||0,ctime:document.getElementById('set-ctime').value||'',cspeed:parseFloat(document.getElementById('set-cspeed').value)||0};}
-  else{set={note:document.getElementById('set-note').value||''};}
-  const existing=await loadDay(selectedDateKey)||{exercises:[]};
-  const ex=existing.exercises.find(e=>e.name===editSetExName);
-  if(ex&&ex.sets)ex.sets[editSetIdx]=set;
-  await saveDay(selectedDateKey,existing);
-  closeModal('modal-set');
-  // Reset modal
-  document.querySelector('#modal-set .btn-go').textContent='Speichern \u2713';
-  document.querySelector('#modal-set .btn-go').onclick=saveSet;
-  const delBtn=document.getElementById('set-delete-btn');if(delBtn)delBtn.remove();
-  renderExercises(existing.exercises,existing.vorlage_id);
-}
-
-// STATS
-async function renderStats(){
-  try{
-    const today=new Date(),thisMonth=`${today.getFullYear()}-${String(today.getMonth()).padStart(2,'0')}`;
-    const allDays=await sb(`/rest/v1/tt2_days?user_id=eq.${UID}&is_pause=eq.false`)||[];
-    const pauseDays=await sb(`/rest/v1/tt2_days?user_id=eq.${UID}&is_pause=eq.true`)||[];
-    const monthDays=allDays.filter(d=>d.date_key.startsWith(thisMonth));
-    document.getElementById('stat-total').textContent=allDays.length;
-    document.getElementById('stat-month').textContent=monthDays.length;
-    document.getElementById('stat-pause').textContent=pauseDays.length;
-    let streak=0;const sorted=allDays.map(d=>d.date_key).sort().reverse();const todayK=todayKey();
-    for(let i=0;i<sorted.length;i++){const exp=keyFromDate(new Date(new Date(todayK).setDate(new Date(todayK).getDate()-i)));if(sorted[i]===exp)streak++;else break;}
-    document.getElementById('stat-streak').textContent=streak;
-  }catch(e){}
-}
-
-// NAV
-function switchScreen(s){
-  ['kalender','vorlagen'].forEach(n=>{document.getElementById('screen-'+n).classList.toggle('active',n===s);document.getElementById('nav-'+n).classList.toggle('active',n===s);});
-  if(s==='vorlagen'){renderVorlageList();renderStats();}
-}
-function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('open');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(el=>el.classList.remove('open'));});
-
-// BOOT
-(function boot(){
-  const s=localStorage.getItem('tt2_uid');
-  if(s){UID=s;document.getElementById('login-screen').style.display='none';document.getElementById('app-screen').style.display='block';init();}
-})();
-</script>
-</body>
-</html>
+        <div style="display:flex;gap:4px">
