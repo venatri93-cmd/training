@@ -816,6 +816,88 @@ function renderDayDetail(dd){
   renderNotizPreview(dd);
 }
 
+// EXERCISE NOTE
+let activeExNoteName='';
+function openExNoteModal(exName,currentNote){
+  activeExNoteName=exName;
+  document.getElementById('exnote-title').textContent='\uD83D\uDCDD '+exName;
+  document.getElementById('exnote-text').value=currentNote||'';
+  document.getElementById('modal-exnote').classList.add('open');
+  setTimeout(()=>document.getElementById('exnote-text').focus(),80);
+}
+async function saveExNote(){
+  const note=document.getElementById('exnote-text').value.trim();
+  const existing=await loadDay(selectedDateKey)||{exercises:[]};
+  const ex=existing.exercises.find(e=>e.name===activeExNoteName);
+  if(ex){ex.note=note;}else{existing.exercises.push({name:activeExNoteName,type:'kraft',sets:[],note});}
+  await saveDay(selectedDateKey,existing);
+  closeModal('modal-exnote');
+  renderExercises(existing.exercises,existing.vorlage_id);
+}
+
+// FINISH
+async function toggleFinished(){
+  const existing=await loadDay(selectedDateKey)||{};
+  const isFinished=!existing.is_finished;
+  const data={...existing,is_finished:isFinished,user_id:UID,date_key:selectedDateKey,updated_at:new Date().toISOString()};
+  delete dayCache[selectedDateKey];setSS('syncing','Speichern...');
+  try{
+    await fetch(SB_URL+'/rest/v1/tt2_days?on_conflict=user_id,date_key',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(data)});
+    dayCache[selectedDateKey]=data;
+    setSS('synced',isFinished?'\uD83D\uDD25 Abgefackelt!':'Gespeichert');
+    renderCal();renderDayDetail(data);
+    if(isFinished){summaryMode=true;renderSummary(data);}
+    else{summaryMode=false;renderExercises(data.exercises||[],data.vorlage_id);}
+  }catch(e){setSS('error','Fehler');}
+}
+
+// SUMMARY
+let summaryMode=false;
+function toggleSummary(){
+  summaryMode=!summaryMode;
+  document.getElementById('summary-btn').classList.toggle('active',summaryMode);
+  const dd=dayCache[selectedDateKey];
+  if(summaryMode){renderSummary(dd);}
+  else{renderExercises(dd?dd.exercises||[]:[],dd?dd.vorlage_id:null);}
+}
+function renderSummary(dd){
+  const c=document.getElementById('exercise-container');
+  const exercises=dd?dd.exercises||[]:[];
+  if(!exercises.length){c.innerHTML='<div class="empty-hint">Keine Daten zum Auswerten.</div>';return;}
+  let html='<div class="exercise-list">';
+  exercises.forEach(ex=>{
+    const sets=ex.sets||[];
+    if(!sets.length){html+=`<div class="exercise-item"><div class="exercise-header"><div class="exercise-name">${ex.name}</div></div><div style="font-size:0.75rem;color:var(--text3)">Keine S\u00e4tze eingetragen</div></div>`;return;}
+    let summary='';
+    if(!ex.type||ex.type==='kraft'){
+      const totalVol=sets.reduce((s,x)=>(s+(x.reps||0)*(x.weight||0)),0);
+      const bestWeight=Math.max(...sets.map(s=>s.weight||0));
+      summary=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${sets.length}</div><div style="font-size:0.65rem;color:var(--text3)">S\u00c4TZE</div></div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${bestWeight}kg</div><div style="font-size:0.65rem;color:var(--text3)">MAX</div></div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${totalVol}kg</div><div style="font-size:0.65rem;color:var(--text3)">VOLUMEN</div></div>
+      </div>
+      <div style="margin-top:6px;font-size:0.75rem;color:var(--text2)">${sets.map((s,i)=>`S${i+1}: ${s.reps}\u00d7${s.weight}kg`).join(' \u00b7 ')}</div>`;
+    }else if(ex.type==='cardio'){
+      const last=sets[sets.length-1];
+      summary=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${last.time||'?'}</div><div style="font-size:0.65rem;color:var(--text3)">ZEIT</div></div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${last.dist||0}km</div><div style="font-size:0.65rem;color:var(--text3)">DISTANZ</div></div>
+      </div>`;
+    }else if(ex.type==='carry'){
+      const last=sets[sets.length-1];
+      summary=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${last.cweight||0}kg</div><div style="font-size:0.65rem;color:var(--text3)">GEWICHT</div></div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${last.cdist||0}m</div><div style="font-size:0.65rem;color:var(--text3)">DISTANZ</div></div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${last.ctime||'?'}</div><div style="font-size:0.65rem;color:var(--text3)">ZEIT</div></div>
+      </div>`;
+    }else{summary=`<div style="margin-top:6px;font-size:0.82rem;color:var(--text2)">${sets.map(s=>s.note).join(' | ')}</div>`;}
+    html+=`<div class="exercise-item"><div class="exercise-header"><div><div class="exercise-name">${ex.name}</div><div class="exercise-type">${EX_TYPES[ex.type]||''}</div></div></div>${summary}</div>`;
+  });
+  html+='</div>';
+  c.innerHTML=html;
+}
+
 function renderNotizPreview(dd){
   const prev=document.getElementById('notiz-preview');
   if(!dd||(!dd.notiz_energie&&!dd.notiz_zyklus&&!dd.notiz_kater&&!dd.notiz_text)){prev.style.display='none';return;}
