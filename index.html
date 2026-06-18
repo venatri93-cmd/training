@@ -274,9 +274,25 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
   </div>
 
+  <!-- RÜCKBLICK SCREEN -->
+  <div id="screen-rueckblick" class="screen">
+    <div class="content">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <button class="cal-nav-btn" onclick="rbWeek(-1)">&#8249;</button>
+        <div style="text-align:center">
+          <div style="font-size:0.95rem;font-weight:800" id="rb-week-label">Diese Woche</div>
+          <div style="font-size:0.72rem;color:var(--text2)" id="rb-week-range"></div>
+        </div>
+        <button class="cal-nav-btn" onclick="rbWeek(1)">&#8250;</button>
+      </div>
+      <div id="rb-content"><div class="loading"><div class="spin"></div></div></div>
+    </div>
+  </div>
+
   <nav class="bottom-nav">
     <div class="nav-item active" id="nav-kalender" onclick="switchScreen('kalender')"><div class="ni">📜</div><div class="nl">Chronik</div></div>
     <div class="nav-item" id="nav-vorlagen" onclick="switchScreen('vorlagen')"><div class="ni">⚔️</div><div class="nl">Grimoire</div></div>
+    <div class="nav-item" id="nav-rueckblick" onclick="switchScreen('rueckblick')"><div class="ni">🌙</div><div class="nl">R&#252;ckblick</div></div>
   </nav>
 </div>
 
@@ -1150,9 +1166,181 @@ async function renderStats(){
 
 // NAV
 function switchScreen(s){
-  ['kalender','vorlagen'].forEach(n=>{document.getElementById('screen-'+n).classList.toggle('active',n===s);document.getElementById('nav-'+n).classList.toggle('active',n===s);});
+  ['kalender','vorlagen','rueckblick'].forEach(n=>{
+    document.getElementById('screen-'+n).classList.toggle('active',n===s);
+    document.getElementById('nav-'+n).classList.toggle('active',n===s);
+  });
   if(s==='vorlagen'){renderVorlageList();renderStats();}
+  if(s==='rueckblick')initRueckblick();
 }
+// ── RÜCKBLICK ──
+let rbOffset=0;
+const DAYS_SHORT_RB=['Mo','Di','Mi','Do','Fr','Sa','So'];
+const MONTHS_SH_RB=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const MONTHS_DE_RB=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+function getWeekDaysRB(offset){
+  const today=new Date();
+  const dow=today.getDay();
+  const monday=new Date(today);
+  monday.setDate(today.getDate()-((dow+6)%7)+offset*7);
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    days.push(keyFromDate(d));
+  }
+  return days;
+}
+
+function rbWeek(delta){
+  rbOffset+=delta;
+  if(rbOffset>0)rbOffset=0;
+  initRueckblick();
+}
+
+async function initRueckblick(){
+  const days=getWeekDaysRB(rbOffset);
+  const from=dateFromKey(days[0]),to=dateFromKey(days[6]);
+  const fmt=d=>`${d.getDate()}. ${MONTHS_SH_RB[d.getMonth()]}`;
+  document.getElementById('rb-week-label').textContent=rbOffset===0?'Diese Woche':rbOffset===-1?'Letzte Woche':`Woche ${fmt(from)}`;
+  document.getElementById('rb-week-range').textContent=`${fmt(from)} \u2013 ${fmt(to)} ${to.getFullYear()}`;
+  document.getElementById('rb-content').innerHTML='<div class="loading"><div class="spin"></div></div>';
+
+  // Load all days
+  const dayData=await Promise.all(days.map(k=>loadDay(k)));
+  renderRueckblick(days,dayData);
+}
+
+function renderRueckblick(days,dayData){
+  let trainings=0,pauses=0,finished=0;
+  const vorlageCount={};
+  const exStats={};
+  const dayCards=[];
+
+  days.forEach((k,i)=>{
+    const dd=dayData[i];
+    if(!dd){dayCards.push({k,empty:true});return;}
+    if(dd.is_pause){pauses++;dayCards.push({k,pause:true});return;}
+    if(dd.vorlage_id){
+      trainings++;
+      if(dd.is_finished)finished++;
+      const v=vorlagen.find(x=>x.id===dd.vorlage_id);
+      const vname=v?v.name:'Unbekannt';
+      vorlageCount[vname]=(vorlageCount[vname]||0)+1;
+      // Collect exercise stats
+      (dd.exercises||[]).forEach(ex=>{
+        if(!exStats[ex.name])exStats[ex.name]={name:ex.name,type:ex.type,sets:[],days:0};
+        exStats[ex.name].days++;
+        (ex.sets||[]).forEach(s=>exStats[ex.name].sets.push(s));
+      });
+    }
+    dayCards.push({k,dd});
+  });
+
+  const maxVol=Object.values(exStats).reduce((max,ex)=>{
+    if(ex.type==='kraft'||!ex.type){
+      const vol=ex.sets.reduce((s,x)=>(s+(x.reps||0)*(x.weight||0)),0);
+      return Math.max(max,vol);
+    }
+    return max;
+  },1);
+
+  document.getElementById('rb-content').innerHTML=`
+    <!-- Woche Übersicht -->
+    <div style="background:var(--card);border-radius:20px;padding:16px;border:1px solid var(--border);margin-bottom:14px">
+      <div class="sec-title" style="margin-bottom:12px">Woche im Überblick</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center">
+          <div style="font-size:1.8rem;font-weight:800;color:var(--accent)">${trainings}</div>
+          <div style="font-size:0.7rem;color:var(--text2)">Trainings</div>
+        </div>
+        <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center">
+          <div style="font-size:1.8rem;font-weight:800;color:var(--gold)">🔥${finished}</div>
+          <div style="font-size:0.7rem;color:var(--text2)">Abgefackelt</div>
+        </div>
+        <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center">
+          <div style="font-size:1.8rem;font-weight:800;color:var(--text3)">${pauses}</div>
+          <div style="font-size:0.7rem;color:var(--text2)">Pausentage</div>
+        </div>
+      </div>
+      <!-- Day bar -->
+      <div style="display:flex;gap:5px">
+        ${days.map((k,i)=>{
+          const dd=dayData[i];
+          const d=dateFromKey(k);
+          const isFinished=dd&&dd.is_finished;
+          const isPause=dd&&dd.is_pause;
+          const hasTraining=dd&&dd.vorlage_id&&!isPause;
+          const v=hasTraining?vorlagen.find(x=>x.id===dd.vorlage_id):null;
+          const col=isPause?'var(--text3)':isFinished?'var(--accent)':hasTraining?'rgba(155,35,53,0.4)':'var(--border)';
+          return`<div style="flex:1;text-align:center">
+            <div style="height:8px;background:${col};border-radius:4px;margin-bottom:5px"></div>
+            <div style="font-size:0.62rem;color:var(--text2);font-weight:700">${DAYS_SHORT_RB[i]}</div>
+            <div style="font-size:0.7rem">${isPause?'😴':isFinished?'🔥':hasTraining?(v&&v.symbol||'💪'):'·'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Trainingstypen diese Woche -->
+    ${Object.keys(vorlageCount).length?`<div style="background:var(--card);border-radius:20px;padding:16px;border:1px solid var(--border);margin-bottom:14px">
+      <div class="sec-title" style="margin-bottom:10px">Trainingstypen</div>
+      ${Object.entries(vorlageCount).map(([name,count])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:0.85rem;font-weight:600">${name}</div>
+          <div style="font-size:0.8rem;color:var(--accent);font-weight:700">${count}x</div>
+        </div>`).join('')}
+    </div>`:''}
+
+    <!-- Übungsfortschritt -->
+    ${Object.keys(exStats).length?`<div style="background:var(--card);border-radius:20px;padding:16px;border:1px solid var(--border);margin-bottom:14px">
+      <div class="sec-title" style="margin-bottom:12px">Übungsübersicht</div>
+      ${Object.values(exStats).map(ex=>{
+        if(ex.type==='kraft'||!ex.type){
+          const totalVol=ex.sets.reduce((s,x)=>(s+(x.reps||0)*(x.weight||0)),0);
+          const maxW=Math.max(...ex.sets.map(s=>s.weight||0));
+          const totalReps=ex.sets.reduce((s,x)=>s+(x.reps||0),0);
+          return`<div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <div style="font-size:0.85rem;font-weight:700">${ex.name}</div>
+              <div style="font-size:0.75rem;color:var(--text2)">${ex.sets.length} Sätze · Max ${maxW}kg</div>
+            </div>
+            <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+              <div style="height:100%;background:var(--accent);border-radius:4px;width:${Math.min(100,Math.round(totalVol/maxVol*100))}%"></div>
+            </div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:3px">Volumen: ${totalVol}kg · ${totalReps} Wdh</div>
+          </div>`;
+        }else if(ex.type==='cardio'){
+          const last=ex.sets[ex.sets.length-1];
+          return`<div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:0.85rem;font-weight:700">${ex.name}</div>
+            <div style="font-size:0.78rem;color:var(--text2)">${last.time||'?'} · ${last.dist||0}km${last.cweight?` · ${last.cweight}kg`:''}</div>
+          </div>`;
+        }
+        return`<div style="margin-bottom:8px;font-size:0.85rem;font-weight:700">${ex.name}</div>`;
+      }).join('')}
+    </div>`:''}
+
+    <!-- Notizen -->
+    ${dayData.some(d=>d&&(d.notiz_text||d.notiz_energie||d.notiz_zyklus))?`<div style="background:var(--card);border-radius:20px;padding:16px;border:1px solid var(--border)">
+      <div class="sec-title" style="margin-bottom:10px">Notizen der Woche</div>
+      ${days.map((k,i)=>{
+        const dd=dayData[i];
+        if(!dd||(!dd.notiz_text&&!dd.notiz_energie&&!dd.notiz_zyklus&&!dd.notiz_kater))return'';
+        const d=dateFromKey(k);
+        const energie='⚡'.repeat(dd.notiz_energie||0);
+        return`<div style="margin-bottom:8px;padding:10px 12px;background:var(--bg);border-radius:12px;border-left:2px solid var(--accent)">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--text3);margin-bottom:4px">${DAYS_SHORT_RB[i]}, ${d.getDate()}. ${MONTHS_DE_RB[d.getMonth()]}</div>
+          ${energie?`<div style="font-size:0.8rem;margin-bottom:2px">${energie} Energie</div>`:''}
+          ${dd.notiz_zyklus?`<div style="font-size:0.8rem;color:var(--text2)">Zyklustag ${dd.notiz_zyklus}</div>`:''}
+          ${dd.notiz_kater?`<div style="font-size:0.8rem;color:var(--text2)">Muskelkater: ${dd.notiz_kater}</div>`:''}
+          ${dd.notiz_text?`<div style="font-size:0.82rem;color:var(--text2);margin-top:3px">${dd.notiz_text}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`:''}
+  `;
+}
+
 function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('open');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(el=>el.classList.remove('open'));});
 document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))document.querySelectorAll('.search-results').forEach(el=>el.classList.remove('open'));});
