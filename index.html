@@ -61,7 +61,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom);}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;cursor:pointer;gap:3px;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 4px 10px;cursor:pointer;gap:4px;min-height:60px;-webkit-tap-highlight-color:transparent;}
 .nav-item .ni{font-size:1.3rem;}
 .nav-item .nl{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);}
 .nav-item.active .nl{color:var(--accent);}
@@ -1009,13 +1009,37 @@ function openSetModal(exName,exType){
   activeExName=exName;activeSetType=exType||'kraft';
   document.getElementById('set-modal-title').textContent=exName+' \u2014 Eintragen';
   ['kraft','cardio','carry','frei'].forEach(t=>{const el=document.getElementById('set-fields-'+t);if(el)el.style.display=t===activeSetType?'block':'none';});
-  ['set-reps','set-weight','set-time','set-dist','set-incline','set-cweight','set-cdist','set-ctime','set-cspeed','set-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  const v=dayCache[selectedDateKey]&&dayCache[selectedDateKey].vorlage_id?vorlagen.find(x=>x.id===dayCache[selectedDateKey].vorlage_id):null;
-  if(v){const vex=v.exercises&&v.exercises.find(e=>e.name===exName);if(vex){
-    if(vex.type==='kraft'){if(document.getElementById('set-reps'))document.getElementById('set-reps').value=vex.reps||'';if(document.getElementById('set-weight'))document.getElementById('set-weight').value=vex.weight||'';}
-    else if(vex.type==='cardio'){if(document.getElementById('set-time'))document.getElementById('set-time').value=vex.time||'';if(document.getElementById('set-dist'))document.getElementById('set-dist').value=vex.dist||'';if(document.getElementById('set-incline'))document.getElementById('set-incline').value=vex.incline||'';}
-    else if(vex.type==='carry'){if(document.getElementById('set-cweight'))document.getElementById('set-cweight').value=vex.cweight||'';if(document.getElementById('set-cdist'))document.getElementById('set-cdist').value=vex.cdist||'';if(document.getElementById('set-ctime'))document.getElementById('set-ctime').value=vex.ctime||'';if(document.getElementById('set-cspeed'))document.getElementById('set-cspeed').value=vex.cspeed||'';}
-  }}
+
+  // Try to pre-fill from last recorded set first
+  const dd=dayCache[selectedDateKey];
+  const ex=dd&&dd.exercises&&dd.exercises.find(e=>e.name===exName);
+  const lastSet=ex&&ex.sets&&ex.sets.length?ex.sets[ex.sets.length-1]:null;
+
+  if(lastSet){
+    // Pre-fill from last set
+    if(activeSetType==='kraft'){
+      if(document.getElementById('set-reps'))document.getElementById('set-reps').value=lastSet.reps||'';
+      if(document.getElementById('set-weight'))document.getElementById('set-weight').value=lastSet.weight||'';
+    }else if(activeSetType==='cardio'){
+      if(document.getElementById('set-time'))document.getElementById('set-time').value=lastSet.time||'';
+      if(document.getElementById('set-dist'))document.getElementById('set-dist').value=lastSet.dist||'';
+      if(document.getElementById('set-incline'))document.getElementById('set-incline').value=lastSet.incline||'';
+      if(document.getElementById('set-cweight'))document.getElementById('set-cweight').value=lastSet.cweight||'';
+    }else if(activeSetType==='carry'){
+      if(document.getElementById('set-cweight'))document.getElementById('set-cweight').value=lastSet.cweight||'';
+      if(document.getElementById('set-cdist'))document.getElementById('set-cdist').value=lastSet.cdist||'';
+      if(document.getElementById('set-ctime'))document.getElementById('set-ctime').value=lastSet.ctime||'';
+      if(document.getElementById('set-cspeed'))document.getElementById('set-cspeed').value=lastSet.cspeed||'';
+    }
+  } else {
+    // No previous set – use vorlage defaults
+    ['set-reps','set-weight','set-time','set-dist','set-incline','set-cweight','set-cdist','set-ctime','set-cspeed','set-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    const v=dd&&dd.vorlage_id?vorlagen.find(x=>x.id===dd.vorlage_id):null;
+    if(v){const vex=v.exercises&&v.exercises.find(e=>e.name===exName);if(vex){
+      if(vex.type==='kraft'){if(document.getElementById('set-reps'))document.getElementById('set-reps').value=vex.reps||'';if(document.getElementById('set-weight'))document.getElementById('set-weight').value=vex.weight||'';}
+      else if(vex.type==='cardio'){if(document.getElementById('set-time'))document.getElementById('set-time').value=vex.time||'';if(document.getElementById('set-dist'))document.getElementById('set-dist').value=vex.dist||'';if(document.getElementById('set-incline'))document.getElementById('set-incline').value=vex.incline||'';if(document.getElementById('set-cweight'))document.getElementById('set-cweight').value=vex.cweight||'';}
+    }}
+  }
   document.getElementById('modal-set').classList.add('open');
   setTimeout(()=>{const first=document.querySelector('#set-fields-'+activeSetType+' input');if(first)first.focus();},80);
 }
