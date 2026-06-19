@@ -1227,11 +1227,24 @@ function renderRueckblick(days,dayData){
       const v=vorlagen.find(x=>x.id===dd.vorlage_id);
       const vname=v?v.name:'Unbekannt';
       vorlageCount[vname]=(vorlageCount[vname]||0)+1;
-      // Collect exercise stats
-      (dd.exercises||[]).forEach(ex=>{
-        if(!exStats[ex.name])exStats[ex.name]={name:ex.name,type:ex.type,sets:[],days:0};
-        exStats[ex.name].days++;
-        (ex.sets||[]).forEach(s=>exStats[ex.name].sets.push(s));
+      // Collect exercise stats - preserve vorlage order
+      const vorlageOrder=v?(v.exercises||[]).map(e=>e.name):[];
+      const dayExNames=(dd.exercises||[]).map(e=>e.name);
+      // Sort by vorlage order, then any extra exercises at end
+      const ordered=[
+        ...vorlageOrder.filter(n=>dayExNames.includes(n)),
+        ...dayExNames.filter(n=>!vorlageOrder.includes(n))
+      ];
+      ordered.forEach(name=>{
+        const ex=(dd.exercises||[]).find(e=>e.name===name);
+        if(!ex)return;
+        if(!exStats[name]){
+          // Get order index from vorlage
+          const orderIdx=vorlageOrder.indexOf(name);
+          exStats[name]={name,type:ex.type,sets:[],days:0,order:orderIdx>=0?orderIdx:999};
+        }
+        exStats[name].days++;
+        (ex.sets||[]).forEach(s=>exStats[name].sets.push(s));
       });
     }
     dayCards.push({k,dd});
@@ -1295,10 +1308,10 @@ function renderRueckblick(days,dayData){
     <!-- Übungsfortschritt -->
     ${Object.keys(exStats).length?`<div style="background:var(--card);border-radius:20px;padding:16px;border:1px solid var(--border);margin-bottom:14px">
       <div class="sec-title" style="margin-bottom:12px">Übungsübersicht</div>
-      ${Object.values(exStats).map(ex=>{
+      ${Object.values(exStats).sort((a,b)=>(a.order||0)-(b.order||0)).map(ex=>{
         if(ex.type==='kraft'||!ex.type){
           const totalVol=ex.sets.reduce((s,x)=>(s+(x.reps||0)*(x.weight||0)),0);
-          const maxW=Math.max(...ex.sets.map(s=>s.weight||0));
+          const maxW=ex.sets.length?Math.max(...ex.sets.map(s=>s.weight||0)):0;
           const totalReps=ex.sets.reduce((s,x)=>s+(x.reps||0),0);
           return`<div style="margin-bottom:12px">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px">
