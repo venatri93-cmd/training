@@ -878,8 +878,21 @@ function toggleSummary(){
 }
 function renderSummary(dd){
   const c=document.getElementById('exercise-container');
-  const exercises=dd?dd.exercises||[]:[];
+  let exercises=dd?dd.exercises||[]:[];
   if(!exercises.length){c.innerHTML='<div class="empty-hint">Keine Daten zum Auswerten.</div>';return;}
+
+  // Sort by vorlage order
+  if(dd&&dd.vorlage_id){
+    const v=vorlagen.find(x=>x.id===dd.vorlage_id);
+    if(v&&v.exercises&&v.exercises.length){
+      const vorlageOrder=v.exercises.map(e=>e.name);
+      exercises=[
+        ...vorlageOrder.map(n=>exercises.find(e=>e.name===n)).filter(Boolean),
+        ...exercises.filter(e=>!vorlageOrder.includes(e.name))
+      ];
+    }
+  }
+
   let html='<div class="exercise-list">';
   exercises.forEach(ex=>{
     const sets=ex.sets||[];
@@ -887,7 +900,7 @@ function renderSummary(dd){
     let summary='';
     if(!ex.type||ex.type==='kraft'){
       const totalVol=sets.reduce((s,x)=>(s+(x.reps||0)*(x.weight||0)),0);
-      const bestWeight=Math.max(...sets.map(s=>s.weight||0));
+      const bestWeight=sets.length?Math.max(...sets.map(s=>s.weight||0)):0;
       summary=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
         <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${sets.length}</div><div style="font-size:0.65rem;color:var(--text3)">S\u00c4TZE</div></div>
         <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--accent)">${bestWeight}kg</div><div style="font-size:0.65rem;color:var(--text3)">MAX</div></div>
